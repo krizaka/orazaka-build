@@ -1,0 +1,464 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.orazaka</groupId>
+    <artifactId>orazaka-parent</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+    <name>orazaka-parent</name>
+    <description>Orazaka parent POM: Java 21, Spring Boot / Spring AI BOMs, the Orazaka BOM (every component at one platform version) and the shared build conventions (Spotless, JaCoCo, Failsafe, profiles).</description>
+    <url>https://github.com/krizaka/orazaka-build</url>
+
+    <organization>
+        <name>Krizaka</name>
+        <url>https://krizaka.com</url>
+    </organization>
+
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>https://www.apache.org/licenses/LICENSE-2.0</url>
+        </license>
+    </licenses>
+
+    <scm>
+        <url>https://github.com/krizaka/orazaka-build</url>
+        <connection>scm:git:https://github.com/krizaka/orazaka-build.git</connection>
+    </scm>
+
+    <properties>
+        <java.version>21</java.version>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <!-- GitHub Packages repository this module is published to. Every Orazaka repository
+             overrides it with its own name (krizaka/<repository>). -->
+        <orazaka.repository>orazaka-build</orazaka.repository>
+
+        <!-- Versions -->
+        <!-- Spring AI 2.0 migration (ADR-030): Spring AI 2.0.0 GA requires Spring Boot 4 +
+             Spring Framework 7 + Jackson 3. DELIBERATE override of the former AGENTS.md §11
+             pin to the 3.5.0 line — update §11 accordingly. Verify the exact Boot 4 patch
+             against the BOM if resolution fails. No -SNAPSHOT (GA only). -->
+        <spring-boot.version>4.0.7</spring-boot.version>
+        <spring-ai.version>2.0.0</spring-ai.version>
+        <graphql-spring-boot.version>15.0.0</graphql-spring-boot.version>
+        <archunit.version>1.3.0</archunit.version>
+        <jacoco.version>0.8.12</jacoco.version>
+        <frontend-maven-plugin.version>1.15.1</frontend-maven-plugin.version>
+        <node.version>v24.11.1</node.version>
+
+        <!-- SonarQube Cloud -->
+        <sonar.organization>krizaka</sonar.organization>
+        <sonar.projectKey>${sonar.organization}_${orazaka.repository}</sonar.projectKey>
+        <sonar.host.url>https://sonarcloud.io</sonar.host.url>
+        <sonar.java.source>21</sonar.java.source>
+        <sonar.coverage.jacoco.xmlReportPaths>**/target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
+        <!-- 🔑 Token injected from env on CI or from .env locally -->
+        <sonar.token>${env.SONAR_TOKEN}</sonar.token>
+
+        <!-- 🌿 Branch detection: auto-resolved from git or overridden via -Dsonar.branch.name -->
+        <sonar.branch.name></sonar.branch.name>
+
+        <!-- 🚫 Exclusions: scratch files, test fixtures, generated code -->
+        <sonar.exclusions>
+            scratch/**/*,
+            **/node_modules/**/*,
+            **/dist/**/*,
+            **/.next/**/*,
+            **/target/**/*
+        </sonar.exclusions>
+
+        <!-- 📊 Coverage exclusions: boilerplate not requiring test coverage -->
+        <sonar.coverage.exclusions>
+            **/entity/**,
+            **/converter/**,
+            **/config/**,
+            **/domain/model/**,
+            **/*Application.java,
+            **/Mapper.java,
+            **/*Mapper.java,
+            **/*Controller.java,
+            **/core/infrastructure/**
+        </sonar.coverage.exclusions>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <version>${spring-boot.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.ai</groupId>
+                <artifactId>spring-ai-bom</artifactId>
+                <version>${spring-ai.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <!-- Internal Modules -->
+            <dependency>
+                <groupId>com.orazaka</groupId>
+                <artifactId>orazaka-core</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.orazaka</groupId>
+                <artifactId>orazaka-identity</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.orazaka</groupId>
+                <artifactId>orazaka-identity-api</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.orazaka</groupId>
+                <artifactId>orazaka-billing-api</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.orazaka</groupId>
+                <artifactId>orazaka-billing-client</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.orazaka</groupId>
+                <artifactId>orazaka-studio-api</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.orazaka</groupId>
+                <artifactId>orazaka-assets</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.orazaka</groupId>
+                <artifactId>orazaka-studio-client</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.orazaka</groupId>
+                <artifactId>orazaka-jobs-api</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.orazaka</groupId>
+                <artifactId>orazaka-tools</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.orazaka</groupId>
+                <artifactId>orazaka-persistence-app-api</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.orazaka</groupId>
+                <artifactId>orazaka-persistence-app</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.orazaka</groupId>
+                <artifactId>orazaka-persistence-identity</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.orazaka</groupId>
+                <artifactId>orazaka-interceptors</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.orazaka</groupId>
+                <artifactId>orazaka-business</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.orazaka</groupId>
+                <artifactId>orazaka-persistence-bridge</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.orazaka</groupId>
+                <artifactId>orazaka-notification-api</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <!-- Shared Test Support -->
+            <dependency>
+                <groupId>com.orazaka</groupId>
+                <artifactId>orazaka-test-support</artifactId>
+                <version>${project.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <!-- Architectural Testing -->
+            <dependency>
+                <groupId>com.tngtech.archunit</groupId>
+                <artifactId>archunit-junit5</artifactId>
+                <version>${archunit.version}</version>
+                <scope>test</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <distributionManagement>
+        <repository>
+            <id>github</id>
+            <name>GitHub Packages — krizaka/${orazaka.repository}</name>
+            <url>https://maven.pkg.github.com/krizaka/${orazaka.repository}</url>
+        </repository>
+    </distributionManagement>
+
+    <repositories>
+        <repository>
+            <id>spring-milestones</id>
+            <name>Spring Milestones</name>
+            <url>https://repo.spring.io/milestone</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-clean-plugin</artifactId>
+                    <version>3.4.0</version>
+                </plugin>
+                <!-- Repackage plugin version follows the Boot BOM — app poms must not pin it. -->
+                <plugin>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-maven-plugin</artifactId>
+                    <version>${spring-boot.version}</version>
+                    <executions>
+                        <!-- Every service says which build it is. Without this /actuator/info is
+                             `{}`, and a stale JVM left over from a failed e2e run answers on the
+                             right port with the wrong code — a green from yesterday's build that
+                             nothing in the harness could distinguish from today's. The e2e
+                             identity check compares what a service reports against the
+                             build-info.properties on disk and refuses to test a process that is
+                             not this build. -->
+                        <execution>
+                            <id>build-info</id>
+                            <goals>
+                                <goal>build-info</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+                <plugin>
+                    <groupId>org.jacoco</groupId>
+                    <artifactId>jacoco-maven-plugin</artifactId>
+                    <version>${jacoco.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-failsafe-plugin</artifactId>
+                    <version>3.5.3</version>
+                    <configuration>
+                        <!-- Same agent args as surefire: an IT that is not instrumented reports
+                             no coverage, and integration tests are where most of the persistence
+                             and messaging code is actually exercised. -->
+                        <argLine>${argLine} -XX:+EnableDynamicAgentLoading</argLine>
+                        <!-- Failsafe runs after `package`, and in a Spring Boot module `package`
+                             has already replaced the artifact with the repackaged fat jar, whose
+                             classes live under BOOT-INF/classes. Failsafe puts that jar on the
+                             classpath, so every application class becomes invisible and the suite
+                             dies at DISCOVERY with NoClassDefFoundError on a class that is right
+                             there in src/main. Pointing at the build output directory is the
+                             documented way out; the alternative — giving repackage an `exec`
+                             classifier — would rename the runnable jar every deployment script
+                             already knows. -->
+                        <classesDirectory>${project.build.outputDirectory}</classesDirectory>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>3.5.3</version>
+                    <configuration>
+                        <!-- ${argLine}: JaCoCo agent args set by prepare-agent.
+                             -XX:+EnableDynamicAgentLoading: Mockito 5 self-attaches its ByteBuddy
+                             agent dynamically; JDK 21+ warns and future JDKs will disallow this by
+                             default. This flag explicitly permits it, keeping the inline mock-maker
+                             working and silencing the JVM dynamic-agent warnings. -->
+                        <argLine>${argLine} -XX:+EnableDynamicAgentLoading</argLine>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.sonarsource.scanner.maven</groupId>
+                    <artifactId>sonar-maven-plugin</artifactId>
+                    <version>4.0.0.4121</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+        <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>properties-maven-plugin</artifactId>
+                <version>1.2.1</version>
+                <executions>
+                    <execution>
+                        <phase>initialize</phase>
+                        <goals>
+                            <goal>read-project-properties</goal>
+                        </goals>
+                        <configuration>
+                            <files>
+                                <file>${maven.multiModuleProjectDirectory}/${env.file}</file>
+                            </files>
+                            <quiet>true</quiet>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.13.0</version>
+                <configuration>
+                    <parameters>true</parameters>
+                    <compilerArgs>
+                        <arg>-Xlint:all</arg>
+                    </compilerArgs>
+                </configuration>
+            </plugin>
+
+            <!-- ─── Spotless — bound, because a formatter nothing runs formats nothing ──
+                 This plugin carried its google-java-format configuration and no <executions>
+                 block, so it was bound to no phase and `./mvnw verify` never checked a line.
+                 82 files were committed in a state this very configuration disavows.
+
+                 It is the third control found declared-and-inert in this repository, after the
+                 `disable-ai` kill-switch whose property Spring never read and the *IT suites
+                 surefire's includes never matched — the failsafe plugin twenty lines below
+                 carries the nine-line comment explaining that one. All three were found by
+                 accident; none by a failing build. The inventory of what else is declared and
+                 bound to nothing is docs/measurements/inert-controls-inventory.md.
+
+                 `validate` rather than `verify`: it is the first phase, so the failure arrives
+                 before anything compiles, and -DskipTests cannot route around it. -->
+            <plugin>
+                <groupId>com.diffplug.spotless</groupId>
+                <artifactId>spotless-maven-plugin</artifactId>
+                <version>2.43.0</version>
+                <configuration>
+                    <java>
+                        <googleJavaFormat>
+                            <version>1.22.0</version>
+                            <style>GOOGLE</style>
+                        </googleJavaFormat>
+                    </java>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>spotless-check</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- ─── Failsafe — runs the *IT suites, which nothing ran before ───────────
+                 Surefire's default includes match **/*Test.java and never **/*IT.java, and no
+                 failsafe binding existed outside the e2e module's own profile. Twelve integration
+                 suites — every Testcontainers test of the billing ledger, the Studio saga, the
+                 pack catalogue and the outbox — were therefore invisible to `./mvnw clean install`
+                 and ran only when someone named them with -Dtest. Two of them had been red for a
+                 whole phase before anyone noticed (ADR-039's seed migration), which is the failure
+                 mode this binding removes: a suite nothing runs is a suite that is already broken.
+
+                 `verify` is bound as well as `integration-test`: without it a failing IT is
+                 recorded and the build still succeeds, which is the same hole one layer down.
+
+                 The e2e module is unaffected — it sets skipTests=${skip.e2e} on this very plugin,
+                 so its 14 live-stack suites stay behind `orazaka test e2e` (-P staging) and are
+                 not dragged into every local build. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>integration-tests</id>
+                        <goals>
+                            <goal>integration-test</goal>
+                            <goal>verify</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- JaCoCo — instruments tests and generates XML coverage reports for SonarCloud -->
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>prepare-agent</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>report</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+    <!-- ====================================================================
+         ADR-040 V2: Industrial Maven Profile Matrix — dev / staging / prod
+         dev     → ./mvnw compile            (default, skips E2E)
+         staging → ./mvnw verify -P staging   (full E2E orchestration)
+         prod    → ./mvnw package -P prod     (production dotenv, skips E2E)
+         ==================================================================== -->
+    <profiles>
+        <profile>
+            <id>dev</id>
+            <activation><activeByDefault>true</activeByDefault></activation>
+            <properties>
+                <env.file>.env</env.file>
+                <skip.e2e>true</skip.e2e>
+            </properties>
+        </profile>
+        <profile>
+            <id>staging</id>
+            <properties>
+                <env.file>.env</env.file>
+                <skip.e2e>false</skip.e2e>
+                <!-- E2E toolchain versions — only materialized in staging -->
+                <docker-maven-plugin.version>0.45.1</docker-maven-plugin.version>
+                <frontend-maven-plugin.version>1.15.1</frontend-maven-plugin.version>
+                <node.version>v24.11.1</node.version>
+            </properties>
+        </profile>
+        <profile>
+            <id>prod</id>
+            <properties>
+                <env.file>.env.prod</env.file>
+                <skip.e2e>true</skip.e2e>
+            </properties>
+        </profile>
+    </profiles>
+
+</project>

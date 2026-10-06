@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.orazaka</groupId>
+        <artifactId>orazaka-build</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>orazaka-test-support</artifactId>
+    <name>orazaka-test-support</name>
+    <description>Shared test infrastructure — ArchUnit governance rules and source file scanners</description>
+
+    <properties>
+        <sonar.skip>true</sonar.skip>
+    </properties>
+
+    <dependencies>
+        <!-- ASM tree + analysis for [LOG-001] (ADR-064): which values reach a logging call is an
+             operand-stack question, and ArchUnit answers only which methods are called. The analysis
+             artifact is the 9.2 already in the local repository — the build is offline (AGENTS.md
+             §0) — and its transitive tree/core are pinned to 9.7.1, which read Java 21 class files;
+             Analyzer and SourceInterpreter are unchanged across those versions. -->
+        <dependency>
+            <groupId>org.ow2.asm</groupId>
+            <artifactId>asm</artifactId>
+            <version>9.7.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.ow2.asm</groupId>
+            <artifactId>asm-tree</artifactId>
+            <version>9.7.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.ow2.asm</groupId>
+            <artifactId>asm-analysis</artifactId>
+            <version>9.2</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.ow2.asm</groupId>
+                    <artifactId>asm-tree</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <!-- ArchUnit for architecture governance rules (compile scope — this IS a test library) -->
+        <dependency>
+            <groupId>com.tngtech.archunit</groupId>
+            <artifactId>archunit-junit5</artifactId>
+            <scope>compile</scope>
+        </dependency>
+
+        <!-- JUnit 5 API for assertions used in rules -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+        </dependency>
+
+        <!-- Jakarta Persistence API for ERR-109 persistence hygiene checks -->
+        <dependency>
+            <groupId>jakarta.persistence</groupId>
+            <artifactId>jakarta.persistence-api</artifactId>
+        </dependency>
+
+        <!-- Spring Data for Repository assignability checks -->
+        <dependency>
+            <groupId>org.springframework.data</groupId>
+            <artifactId>spring-data-commons</artifactId>
+        </dependency>
+
+        <!-- Spring Beans for @Autowired detection -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-beans</artifactId>
+        </dependency>
+
+        <!-- Spring Web for @RestController/@Controller annotation detection -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-web</artifactId>
+        </dependency>
+
+        <!-- Spring Context for @Configuration annotation detection -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context</artifactId>
+        </dependency>
+
+        <!-- Apache Commons IO — streaming line iteration for SourceFileScanner -->
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>2.18.0</version>
+        </dependency>
+
+        <!-- ═══════════════════════════════════════════════════════════════════
+             Testcontainers — Singleton container infrastructure [ADR-034]
+             ═══════════════════════════════════════════════════════════════════ -->
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>testcontainers</artifactId>
+            <version>1.20.4</version>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>1.20.4</version>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>1.20.4</version>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>rabbitmq</artifactId>
+            <version>1.20.4</version>
+        </dependency>
+
+        <!-- Spring Boot Test — @DynamicPropertySource for ephemeral port mapping -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-test</artifactId>
+        </dependency>
+        <!-- Test slice auto-configuration (@DataJpaTest / @SpringBootTest /
+             @AutoConfigureTestDatabase) so any module extending
+             AbstractContainerIntegrationTest can boot a context against the
+             singleton containers without re-declaring this dependency. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-test-autoconfigure</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-test</artifactId>
+        </dependency>
+
+        <!-- ── Test scope: this module's own suite ─────────────────────────────
+             SeedBootstrapIT loads infra/initdb into a real Postgres (audit #31). The rules in
+             src/main are a library for other modules; these three are what running a test HERE
+             needs, and they stop at this module's test classpath. -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Redis Testcontainers (GenericContainer-based, no dedicated module) -->
+        <!-- Managed via GenericContainer<>("redis:7-alpine") in AbstractContainerIntegrationTest -->
+
+        <!-- Reads orazaka-packs/*/pack.yaml in SeedBootstrapIT. A pack manifest is the declaration
+             of what a pack's Studios need granted, and parsing it with a regular expression is the
+             transcription defect this repository keeps finding. Version comes from the Spring Boot
+             BOM (AGENTS.md §11) — never pin it here. -->
+        <dependency>
+            <groupId>org.yaml</groupId>
+            <artifactId>snakeyaml</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+</project>
