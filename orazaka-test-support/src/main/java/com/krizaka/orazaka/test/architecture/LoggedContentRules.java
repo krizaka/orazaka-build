@@ -1,4 +1,4 @@
-package com.orazaka.test.architecture;
+package com.krizaka.orazaka.test.architecture;
 
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -74,7 +74,7 @@ import org.objectweb.asm.tree.analysis.SourceValue;
  */
 public final class LoggedContentRules {
 
-  private static final String OWN_CODE = "com.orazaka";
+  private static final String OWN_CODE = "com.krizaka.orazaka";
 
   /** Types whose instances carry what a user wrote or a model answered. */
   static final Set<String> CONTENT_TYPES =
@@ -87,76 +87,80 @@ public final class LoggedContentRules {
           "org/springframework/ai/chat/messages/UserMessage",
           "org/springframework/ai/chat/messages/AssistantMessage",
           "org/springframework/ai/chat/messages/SystemMessage",
-          "com/orazaka/core/domain/model/chat/ChatRequest",
-          "com/orazaka/core/domain/model/chat/ChatRequest$ChatMessage",
-          "com/orazaka/core/domain/model/chat/ChatResponse",
-          "com/orazaka/core/domain/model/chat/InternalChatRequest",
-          "com/orazaka/core/domain/model/chat/InternalChatRequest$ChatMessage",
-          "com/orazaka/core/domain/model/chat/InternalChatResponse",
-          "com/orazaka/core/domain/model/audio/AudioRequest",
-          "com/orazaka/core/domain/model/image/ImageRequest",
-          "com/orazaka/core/domain/model/PromptContext",
-          "com/orazaka/core/application/pipeline/EnginePipelineContext",
-          "com/orazaka/jobs/domain/model/JobCommand",
-          "com/orazaka/tools/domain/model/poster/AnalyzePosterRequest",
-          "com/orazaka/tools/domain/model/search/SearchWebRequest",
-          "com/orazaka/tools/domain/model/audio/AnalyzeAudioExtractRequest");
+          "com/krizaka/orazaka/core/domain/model/chat/ChatRequest",
+          "com/krizaka/orazaka/core/domain/model/chat/ChatRequest$ChatMessage",
+          "com/krizaka/orazaka/core/domain/model/chat/ChatResponse",
+          "com/krizaka/orazaka/core/domain/model/chat/InternalChatRequest",
+          "com/krizaka/orazaka/core/domain/model/chat/InternalChatRequest$ChatMessage",
+          "com/krizaka/orazaka/core/domain/model/chat/InternalChatResponse",
+          "com/krizaka/orazaka/core/domain/model/audio/AudioRequest",
+          "com/krizaka/orazaka/core/domain/model/image/ImageRequest",
+          "com/krizaka/orazaka/core/domain/model/PromptContext",
+          "com/krizaka/orazaka/core/application/pipeline/EnginePipelineContext",
+          "com/krizaka/orazaka/jobs/domain/model/JobCommand",
+          "com/krizaka/orazaka/tools/domain/model/poster/AnalyzePosterRequest",
+          "com/krizaka/orazaka/tools/domain/model/search/SearchWebRequest",
+          "com/krizaka/orazaka/tools/domain/model/audio/AnalyzeAudioExtractRequest");
 
   /** Accessors that read content out of an object, whatever type they return. */
   static final Set<String> CONTENT_ACCESSORS =
       Set.of(
-          "com/orazaka/core/domain/model/chat/ChatRequest#prompt",
-          "com/orazaka/core/domain/model/chat/ChatRequest$ChatMessage#content",
-          "com/orazaka/core/domain/model/chat/ChatResponse#content",
-          "com/orazaka/core/domain/model/chat/InternalChatRequest#prompt",
-          "com/orazaka/core/domain/model/chat/InternalChatRequest$ChatMessage#content",
-          "com/orazaka/core/domain/model/chat/InternalChatResponse#content",
-          "com/orazaka/core/domain/model/audio/AudioRequest#prompt",
-          "com/orazaka/core/domain/model/image/ImageRequest#prompt",
-          "com/orazaka/core/domain/model/PromptContext#rawUserQuery",
-          "com/orazaka/core/domain/model/PromptContext#refinedPrompt",
-          "com/orazaka/core/application/pipeline/EnginePipelineContext#promptText",
-          "com/orazaka/jobs/domain/model/JobCommand#prompt",
-          "com/orazaka/jobs/domain/model/JobCommand#requirePrompt",
+          "com/krizaka/orazaka/core/domain/model/chat/ChatRequest#prompt",
+          "com/krizaka/orazaka/core/domain/model/chat/ChatRequest$ChatMessage#content",
+          "com/krizaka/orazaka/core/domain/model/chat/ChatResponse#content",
+          "com/krizaka/orazaka/core/domain/model/chat/InternalChatRequest#prompt",
+          "com/krizaka/orazaka/core/domain/model/chat/InternalChatRequest$ChatMessage#content",
+          "com/krizaka/orazaka/core/domain/model/chat/InternalChatResponse#content",
+          "com/krizaka/orazaka/core/domain/model/audio/AudioRequest#prompt",
+          "com/krizaka/orazaka/core/domain/model/image/ImageRequest#prompt",
+          "com/krizaka/orazaka/core/domain/model/PromptContext#rawUserQuery",
+          "com/krizaka/orazaka/core/domain/model/PromptContext#refinedPrompt",
+          "com/krizaka/orazaka/core/application/pipeline/EnginePipelineContext#promptText",
+          "com/krizaka/orazaka/jobs/domain/model/JobCommand#prompt",
+          "com/krizaka/orazaka/jobs/domain/model/JobCommand#requirePrompt",
           "org/springframework/ai/chat/messages/Message#getText",
           "org/springframework/ai/chat/messages/AbstractMessage#getText",
           "org/springframework/ai/chat/messages/AssistantMessage#getText",
           "org/springframework/ai/chat/messages/UserMessage#getText",
           "org/springframework/ai/chat/prompt/Prompt#getContents",
           // Transport and contract records: the same text, one hop earlier or later.
-          "com/orazaka/conversationservice/infrastructure/adapter/rest/dto/IntentionRequest#prompt",
-          "com/orazaka/conversationservice/infrastructure/adapter/rest/dto/IntentionRequest#goal",
-          "com/orazaka/conversationservice/infrastructure/adapter/rest/dto/ImageGenerationRequest#prompt",
-          "com/orazaka/conversationservice/infrastructure/adapter/rest/dto/CodeGenerationRequest#prompt",
-          "com/orazaka/conversationservice/infrastructure/adapter/rest/dto/VideoGenerationRequest#prompt",
-          "com/orazaka/conversationservice/infrastructure/adapter/rest/dto/SpeechRequest#text",
-          "com/orazaka/conversationservice/infrastructure/adapter/rest/dto/ChatStreamRequest#prompt",
-          "com/orazaka/knowledgeservice/infrastructure/adapter/rest/dto/ContentResponse#content",
-          "com/orazaka/knowledgeservice/infrastructure/adapter/rest/dto/RetrieveRequest#query",
-          "com/orazaka/knowledgeservice/infrastructure/adapter/rest/dto/SourceSearchRequest#query",
-          "com/orazaka/persistence/domain/model/ChatMessageDto#content",
-          "com/orazaka/business/api/ChatPayload#prompt",
-          "com/orazaka/business/api/ImagePayload#prompt",
-          "com/orazaka/business/api/AgentPayload#goal",
-          "com/orazaka/tools/domain/model/search/SearchWebRequest#query",
-          "com/orazaka/tools/domain/model/poster/AnalyzePosterRequest#prompt");
+          "com/krizaka/orazaka/conversationservice/infrastructure/adapter/rest/dto/IntentionRequest#prompt",
+          "com/krizaka/orazaka/conversationservice/infrastructure/adapter/rest/dto/IntentionRequest#goal",
+          "com/krizaka/orazaka/conversationservice/infrastructure/adapter/rest/dto/ImageGenerationRequest#prompt",
+          "com/krizaka/orazaka/conversationservice/infrastructure/adapter/rest/dto/CodeGenerationRequest#prompt",
+          "com/krizaka/orazaka/conversationservice/infrastructure/adapter/rest/dto/VideoGenerationRequest#prompt",
+          "com/krizaka/orazaka/conversationservice/infrastructure/adapter/rest/dto/SpeechRequest#text",
+          "com/krizaka/orazaka/conversationservice/infrastructure/adapter/rest/dto/ChatStreamRequest#prompt",
+          "com/krizaka/orazaka/knowledgeservice/infrastructure/adapter/rest/dto/ContentResponse#content",
+          "com/krizaka/orazaka/knowledgeservice/infrastructure/adapter/rest/dto/RetrieveRequest#query",
+          "com/krizaka/orazaka/knowledgeservice/infrastructure/adapter/rest/dto/SourceSearchRequest#query",
+          "com/krizaka/orazaka/persistence/domain/model/ChatMessageDto#content",
+          "com/krizaka/orazaka/business/api/ChatPayload#prompt",
+          "com/krizaka/orazaka/business/api/ImagePayload#prompt",
+          "com/krizaka/orazaka/business/api/AgentPayload#goal",
+          "com/krizaka/orazaka/tools/domain/model/search/SearchWebRequest#query",
+          "com/krizaka/orazaka/tools/domain/model/poster/AnalyzePosterRequest#prompt");
 
   /** Where a method builds content, and which of the call's declared parameters is the content. */
   static final Map<String, List<Integer>> CONTENT_SINKS =
       Map.ofEntries(
-          Map.entry("com/orazaka/core/domain/model/chat/ChatRequest#<init>", List.of(0)),
-          Map.entry("com/orazaka/core/domain/model/chat/ChatRequest#simple", List.of(0)),
+          Map.entry("com/krizaka/orazaka/core/domain/model/chat/ChatRequest#<init>", List.of(0)),
+          Map.entry("com/krizaka/orazaka/core/domain/model/chat/ChatRequest#simple", List.of(0)),
           Map.entry(
-              "com/orazaka/core/domain/model/chat/ChatRequest$ChatMessage#<init>", List.of(1)),
-          Map.entry("com/orazaka/core/domain/model/chat/InternalChatRequest#<init>", List.of(0)),
-          Map.entry("com/orazaka/core/domain/model/chat/InternalChatRequest#simple", List.of(0)),
-          Map.entry(
-              "com/orazaka/core/domain/model/chat/InternalChatRequest$ChatMessage#<init>",
+              "com/krizaka/orazaka/core/domain/model/chat/ChatRequest$ChatMessage#<init>",
               List.of(1)),
-          Map.entry("com/orazaka/core/domain/model/audio/AudioRequest#<init>", List.of(0)),
-          Map.entry("com/orazaka/core/domain/model/image/ImageRequest#<init>", List.of(0)),
-          Map.entry("com/orazaka/core/domain/model/PromptContext#<init>", List.of(0, 3)),
-          Map.entry("com/orazaka/core/domain/model/PromptContext#withRefinedPrompt", List.of(0)),
+          Map.entry(
+              "com/krizaka/orazaka/core/domain/model/chat/InternalChatRequest#<init>", List.of(0)),
+          Map.entry(
+              "com/krizaka/orazaka/core/domain/model/chat/InternalChatRequest#simple", List.of(0)),
+          Map.entry(
+              "com/krizaka/orazaka/core/domain/model/chat/InternalChatRequest$ChatMessage#<init>",
+              List.of(1)),
+          Map.entry("com/krizaka/orazaka/core/domain/model/audio/AudioRequest#<init>", List.of(0)),
+          Map.entry("com/krizaka/orazaka/core/domain/model/image/ImageRequest#<init>", List.of(0)),
+          Map.entry("com/krizaka/orazaka/core/domain/model/PromptContext#<init>", List.of(0, 3)),
+          Map.entry(
+              "com/krizaka/orazaka/core/domain/model/PromptContext#withRefinedPrompt", List.of(0)),
           Map.entry("org/springframework/ai/chat/messages/UserMessage#<init>", List.of(0)),
           Map.entry("org/springframework/ai/chat/messages/AssistantMessage#<init>", List.of(0)),
           Map.entry("org/springframework/ai/chat/messages/SystemMessage#<init>", List.of(0)),

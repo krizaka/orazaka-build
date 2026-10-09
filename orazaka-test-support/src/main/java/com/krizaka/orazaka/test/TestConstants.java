@@ -1,4 +1,4 @@
-package com.orazaka.test;
+package com.krizaka.orazaka.test;
 
 /**
  * Shared test literal constants used across multiple test modules.
@@ -6,7 +6,7 @@ package com.orazaka.test;
  * <p>Extracted to eliminate Sonar S1192 (duplicate string literals) violations across the monorepo.
  * Each constant is documented with the approximate cross-module usage count.
  *
- * <p>Usage: {@code import static com.orazaka.test.TestConstants.*;}
+ * <p>Usage: {@code import static com.krizaka.orazaka.test.TestConstants.*;}
  */
 public final class TestConstants {
 
@@ -123,16 +123,16 @@ public final class TestConstants {
 
   // ─── Architecture Package Patterns ────────────────────────────────────────
   /** Core module package pattern for ArchUnit. */
-  public static final String PKG_CORE = "com.orazaka.core..";
+  public static final String PKG_CORE = "com.krizaka.orazaka.core..";
 
   /** Identity module package pattern for ArchUnit. */
   public static final String PKG_IDENTITY = "com.krizaka.users..";
 
   /** Router module package pattern for ArchUnit. */
-  public static final String PKG_ROUTER = "com.orazaka.conversationservice..";
+  public static final String PKG_ROUTER = "com.krizaka.orazaka.conversationservice..";
 
   /** Tools module package pattern for ArchUnit. */
-  public static final String PKG_TOOLS = "com.orazaka.tools..";
+  public static final String PKG_TOOLS = "com.krizaka.orazaka.tools..";
 
   // ─── Auth/Identity ────────────────────────────────────────────────────────
   /** Test email. */

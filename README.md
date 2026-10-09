@@ -26,8 +26,8 @@ part of the [Orazaka platform](https://github.com/krizaka/orazaka) by [Krizaka](
 
 | Module | Artifact | Role |
 |:---|:---|:---|
-| `orazaka-parent` | `com.orazaka:orazaka-parent` (pom) | Java 21, Spring Boot 4.0 + Spring AI 2.0 BOMs, the **Orazaka BOM** (every component at one platform version), Spotless (google-java-format), JaCoCo, Surefire/Failsafe, `dev`/`staging`/`prod` profiles, GitHub Packages distribution. |
-| `orazaka-test-support` | `com.orazaka:orazaka-test-support` | The governance kit: ArchUnit rules (`GovernanceRules`, naming, tiers, security, outbox, metering…), SQL seam rules, Testcontainers singletons (`AbstractContainerIntegrationTest`), workspace locator. |
+| `orazaka-parent` | `com.krizaka.orazaka:orazaka-parent` (pom) | Java 21, Spring Boot 4.0 + Spring AI 2.0 BOMs, the **Orazaka BOM** (every component at one platform version), Spotless (google-java-format), JaCoCo, Surefire/Failsafe, `dev`/`staging`/`prod` profiles, GitHub Packages distribution. |
+| `orazaka-test-support` | `com.krizaka.orazaka:orazaka-test-support` | The governance kit: ArchUnit rules (`GovernanceRules`, naming, tiers, security, outbox, metering…), SQL seam rules, Testcontainers singletons (`AbstractContainerIntegrationTest`), workspace locator. |
 
 ## Use it
 
@@ -35,7 +35,7 @@ Every Orazaka JVM repository inherits the parent:
 
 ```xml
 <parent>
-    <groupId>com.orazaka</groupId>
+    <groupId>com.krizaka.orazaka</groupId>
     <artifactId>orazaka-parent</artifactId>
     <version>1.0.0-SNAPSHOT</version>
     <relativePath/>
@@ -46,7 +46,7 @@ and runs the governance rules from its tests:
 
 ```xml
 <dependency>
-    <groupId>com.orazaka</groupId>
+    <groupId>com.krizaka.orazaka</groupId>
     <artifactId>orazaka-test-support</artifactId>
     <scope>test</scope>
 </dependency>

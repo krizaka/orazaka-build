@@ -1,8 +1,8 @@
-package com.orazaka.test.bootstrap;
+package com.krizaka.orazaka.test.bootstrap;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.orazaka.test.architecture.Workspace;
+import com.krizaka.orazaka.test.architecture.Workspace;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Connection;

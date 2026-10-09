@@ -1,4 +1,4 @@
-package com.orazaka.test.architecture;
+package com.krizaka.orazaka.test.architecture;
 
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.fields;
@@ -74,20 +74,21 @@ public final class GovernanceRules {
    * krizaka-users-api) is deliberately absent: it is Tier-1 and shared freely.
    *
    * <p>Persistence is listed as its two <b>implementation</b> packs rather than as the whole {@code
-   * com.orazaka.persistence..} prefix, for the same reason identity is. That context's Tier-1
-   * contract — {@code orazaka-libs/orazaka-contracts/orazaka-persistence-app-api} — publishes under
-   * {@code com.orazaka.persistence.domain..}, sharing a prefix with the Tier-3 module beside it, so
-   * a blanket ban on the prefix forbids exactly the contract the tiers exist to encourage. The
-   * blanket form went unnoticed while the rule was wired only into services that touch no
-   * persistence at all; wiring it into the job service, which reaches the app-persistence context
-   * through its ports, produced 48 hits of which every single one was a Tier-1 contract type. The
-   * two packs below exist only in {@code orazaka-libs/orazaka-ai-engine/orazaka-persistence-app},
-   * so the ban still lands on the implementation and no longer on the contract.
+   * com.krizaka.orazaka.persistence..} prefix, for the same reason identity is. That context's
+   * Tier-1 contract — {@code orazaka-libs/orazaka-contracts/orazaka-persistence-app-api} —
+   * publishes under {@code com.krizaka.orazaka.persistence.domain..}, sharing a prefix with the
+   * Tier-3 module beside it, so a blanket ban on the prefix forbids exactly the contract the tiers
+   * exist to encourage. The blanket form went unnoticed while the rule was wired only into services
+   * that touch no persistence at all; wiring it into the job service, which reaches the
+   * app-persistence context through its ports, produced 48 hits of which every single one was a
+   * Tier-1 contract type. The two packs below exist only in {@code
+   * orazaka-libs/orazaka-ai-engine/orazaka-persistence-app}, so the ban still lands on the
+   * implementation and no longer on the contract.
    */
   private static final String[] TIER3_IMPL_PACKAGES = {
-    "com.orazaka.business..",
-    "com.orazaka.persistence.application..",
-    "com.orazaka.persistence.infrastructure..",
+    "com.krizaka.orazaka.business..",
+    "com.krizaka.orazaka.persistence.application..",
+    "com.krizaka.orazaka.persistence.infrastructure..",
     "com.krizaka.users.application..",
     "com.krizaka.users.infrastructure..",
     "com.krizaka.users.domain.ports.."
@@ -666,9 +667,9 @@ public final class GovernanceRules {
    * [CAP-002] The endpoint rule has one author.
    *
    * <p>{@code uriPath} and {@code httpMethod} are both present or both absent, and the only place
-   * that decides so is {@link com.orazaka.jobs.domain.model.CapabilityDeclaration}. A model that
-   * re-derives it — a {@code "POST"} default of its own, a {@code nullable = false} of its own — is
-   * how three of the four sites came to disagree with each other.
+   * that decides so is {@link com.krizaka.orazaka.jobs.domain.model.CapabilityDeclaration}. A model
+   * that re-derives it — a {@code "POST"} default of its own, a {@code nullable = false} of its own
+   * — is how three of the four sites came to disagree with each other.
    *
    * <p>The database's CHECK constraint is exempt and stays: it is the same rule in another system,
    * which is what catches a writer that never passed through Java at all.

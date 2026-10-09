@@ -1,4 +1,4 @@
-package com.orazaka.test.architecture;
+package com.krizaka.orazaka.test.architecture;
 
 import com.tngtech.archunit.core.domain.JavaClasses;
 
@@ -45,7 +45,7 @@ import com.tngtech.archunit.core.domain.JavaClasses;
 public final class ConfigBindingRules {
 
   /** Orazaka binds its own types and the Krizaka artifacts it is built on. */
-  private static final String[] OWN_CODE = {"com.orazaka", "com.krizaka"};
+  private static final String[] OWN_CODE = {"com.krizaka.orazaka", "com.krizaka"};
 
   private ConfigBindingRules() {}
 

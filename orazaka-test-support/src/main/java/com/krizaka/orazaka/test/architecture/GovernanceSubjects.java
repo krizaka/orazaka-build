@@ -1,4 +1,4 @@
-package com.orazaka.test.architecture;
+package com.krizaka.orazaka.test.architecture;
 
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -81,7 +81,7 @@ public final class GovernanceSubjects {
    * an ArchUnit rule's {@code check}/{@code evaluate}, whose {@code failOnEmptyShould} refuses an
    * empty selection, or {@link #require}. And nothing may call {@code allowEmptyShould}, which is
    * how that ArchUnit guard was switched off on thirteen rules before this existed. Its population
-   * is the rule entry points of {@code com.orazaka.test.architecture}.
+   * is the rule entry points of {@code com.krizaka.orazaka.test.architecture}.
    */
   public static void assertEveryRuleIsNonVacuous() {
     JavaClasses rules =
@@ -129,7 +129,7 @@ public final class GovernanceSubjects {
     }
   }
 
-  private static final String RULES_PACKAGE = "com.orazaka.test.architecture";
+  private static final String RULES_PACKAGE = "com.krizaka.orazaka.test.architecture";
 
   /** The generic rules Orazaka delegates to (krizaka-test-support) are held to the same bar. */
   private static final String KRIZAKA_RULES_PACKAGE = "com.krizaka.test.architecture";

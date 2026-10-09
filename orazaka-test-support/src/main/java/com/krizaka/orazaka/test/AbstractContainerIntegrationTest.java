@@ -1,4 +1,4 @@
-package com.orazaka.test;
+package com.krizaka.orazaka.test;
 
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;

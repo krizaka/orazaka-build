@@ -1,4 +1,4 @@
-package com.orazaka.test.architecture;
+package com.krizaka.orazaka.test.architecture;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;

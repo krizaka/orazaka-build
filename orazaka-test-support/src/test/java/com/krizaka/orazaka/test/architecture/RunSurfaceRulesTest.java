@@ -1,4 +1,4 @@
-package com.orazaka.test.architecture;
+package com.krizaka.orazaka.test.architecture;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -72,7 +72,7 @@ class RunSurfaceRulesTest {
         .as(
             "this file and MeteringMarkerRules name the exchange and the verbs in prose, to say"
                 + " what they check — a rule that counted itself would be true and useless")
-        .noneMatch(name -> name.startsWith("com.orazaka.test.architecture."));
+        .noneMatch(name -> name.startsWith("com.krizaka.orazaka.test.architecture."));
   }
 
   @Test
