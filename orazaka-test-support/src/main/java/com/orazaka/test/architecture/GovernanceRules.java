@@ -3,26 +3,18 @@ package com.orazaka.test.architecture;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.fields;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
-import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noFields;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.tngtech.archunit.core.domain.JavaClass;
+import com.krizaka.test.architecture.CodeRules;
+import com.krizaka.test.architecture.SourceRules;
 import com.tngtech.archunit.core.domain.JavaClasses;
-import com.tngtech.archunit.core.domain.JavaField;
-import com.tngtech.archunit.core.domain.JavaModifier;
-import com.tngtech.archunit.core.domain.Source;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
-import com.tngtech.archunit.core.importer.ImportOption;
-import com.tngtech.archunit.lang.ArchCondition;
-import com.tngtech.archunit.lang.ConditionEvents;
-import com.tngtech.archunit.lang.SimpleConditionEvent;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -36,7 +28,6 @@ import java.util.stream.Stream;
  */
 public final class GovernanceRules {
 
-  private static final String MAPPER_SUFFIX = "Mapper";
   private static final String DOMAIN_LAYER = "Domain";
   private static final String APPLICATION_LAYER = "Application";
   private static final String APPLICATION_PKG_PATTERN = ".application..";
@@ -45,11 +36,15 @@ public final class GovernanceRules {
 
   // ─── Class Import Helpers ───
 
-  /** Imports production classes for the given base package (excludes test sources). */
+  /**
+   * Imports production classes for the given base package (excludes test sources). Delegates to
+   * krizaka-test-support.
+   *
+   * @param basePackage see {@link CodeRules.importProductionClasses}
+   * @return the imported classes
+   */
   public static JavaClasses importProductionClasses(String basePackage) {
-    return new ClassFileImporter()
-        .withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS)
-        .importPackages(basePackage);
+    return CodeRules.importProductionClasses(basePackage);
   }
 
   /** Imports all classes (production + test) for the given base package. */
@@ -75,8 +70,8 @@ public final class GovernanceRules {
   /**
    * Tier-3 (owned-domain) implementation packs, per the AGENTS.md §2 sharing tiers. These may be
    * used only by their owning bounded context — never across a context boundary. The identity
-   * <em>contract</em> ({@code com.orazaka.identity.domain.model}/{@code .exception}, i.e.
-   * orazaka-identity-api) is deliberately absent: it is Tier-1 and shared freely.
+   * <em>contract</em> ({@code com.krizaka.users.domain.model}/{@code .exception}, i.e.
+   * krizaka-users-api) is deliberately absent: it is Tier-1 and shared freely.
    *
    * <p>Persistence is listed as its two <b>implementation</b> packs rather than as the whole {@code
    * com.orazaka.persistence..} prefix, for the same reason identity is. That context's Tier-1
@@ -93,9 +88,9 @@ public final class GovernanceRules {
     "com.orazaka.business..",
     "com.orazaka.persistence.application..",
     "com.orazaka.persistence.infrastructure..",
-    "com.orazaka.identity.application..",
-    "com.orazaka.identity.infrastructure..",
-    "com.orazaka.identity.domain.ports.."
+    "com.krizaka.users.application..",
+    "com.krizaka.users.infrastructure..",
+    "com.krizaka.users.domain.ports.."
   };
 
   /**
@@ -120,304 +115,166 @@ public final class GovernanceRules {
 
   // ─── ERR-103: One Top-Level Class Per File ───
 
-  /** Asserts every top-level class resides in a dedicated file matching its simple name. */
+  /**
+   * Every top-level class lives in a file named after it [ERR-103] — krizaka-test-support's rule.
+   *
+   * @param classes see {@link CodeRules#assertOneTopLevelClassPerFile}
+   * @param modulePackage see {@link CodeRules#assertOneTopLevelClassPerFile}
+   */
   public static void assertOneTopLevelClassPerFile(JavaClasses classes, String modulePackage) {
-    classes()
-        .that()
-        .resideInAPackage(modulePackage + "..")
-        .and()
-        .doNotHaveModifier(JavaModifier.SYNTHETIC)
-        .should(
-            new ArchCondition<com.tngtech.archunit.core.domain.JavaClass>(
-                "reside in a dedicated file matching their class name") {
-              @Override
-              public void check(
-                  com.tngtech.archunit.core.domain.JavaClass javaClass, ConditionEvents events) {
-                if (javaClass.isAnonymousClass() || javaClass.isMemberClass()) {
-                  return;
-                }
-                String sourceFileName =
-                    javaClass.getSource().flatMap(Source::getFileName).orElse(null);
-                if (sourceFileName != null && !sourceFileName.equals("Unknown Source")) {
-                  String expectedFileName = javaClass.getSimpleName() + ".java";
-                  if (!sourceFileName.equals(expectedFileName)) {
-                    events.add(
-                        SimpleConditionEvent.violated(
-                            javaClass,
-                            String.format(
-                                "Architecture Violation [ERR-103]: Class '%s' is illegally bundled"
-                                    + " inside '%s'.",
-                                javaClass.getFullName(), sourceFileName)));
-                  }
-                }
-              }
-            })
-        .because("Every top-level class must reside in its own dedicated .java file [ERR-103]")
-        .check(classes);
+    CodeRules.assertOneTopLevelClassPerFile(classes, modulePackage);
   }
 
   // ─── ERR-104: No Redundant Project Prefix ───
 
-  /** Asserts no class names start with 'Orazaka' prefix. */
+  /**
+   * No class name starts with {@code Orazaka} [ERR-104]. Delegates to krizaka-test-support.
+   *
+   * @param classes see {@link CodeRules.assertNoProductPrefix}
+   * @param modulePackage see {@link CodeRules.assertNoProductPrefix}
+   */
   public static void assertNoRedundantPrefix(JavaClasses classes, String modulePackage) {
-    classes()
-        .that()
-        .resideInAPackage(modulePackage + "..")
-        .should()
-        .haveSimpleNameNotStartingWith("Orazaka")
-        .because("Project name must not be prepended to class names [ERR-104]")
-        .check(classes);
+    CodeRules.assertNoProductPrefix(classes, modulePackage, "Orazaka");
   }
 
   // ─── ERR-105: *Impl Package-Private Visibility ───
 
-  /** Asserts *Impl classes in the given service package are not public. */
+  /**
+   * {@code *Impl} classes are not public [ERR-105]. Delegates to krizaka-test-support.
+   *
+   * @param classes see {@link CodeRules.assertImplClassesPackagePrivate}
+   * @param servicePackage see {@link CodeRules.assertImplClassesPackagePrivate}
+   */
   public static void assertImplClassesPackagePrivate(JavaClasses classes, String servicePackage) {
-    classes()
-        .that()
-        .resideInAPackage(servicePackage + "..")
-        .and()
-        .haveSimpleNameEndingWith("Impl")
-        .should()
-        .notBePublic()
-        .because(
-            "Implementation classes (*Impl) must be package-private."
-                + " Cross-module interaction through interfaces only [ERR-105]")
-        .check(classes);
+    CodeRules.assertImplClassesPackagePrivate(classes, servicePackage);
   }
 
   // ─── ERR-107: Mapper Visibility ───
 
-  /** Asserts *Mapper classes in the given package are final. */
+  /**
+   * {@code *Mapper} classes are final [ERR-107]. Delegates to krizaka-test-support.
+   *
+   * @param classes see {@link CodeRules.assertMappersFinal}
+   * @param modulePackage see {@link CodeRules.assertMappersFinal}
+   */
   public static void assertMappersFinal(JavaClasses classes, String modulePackage) {
-    classes()
-        .that()
-        .resideInAPackage(modulePackage + "..")
-        .and()
-        .haveSimpleNameEndingWith(MAPPER_SUFFIX)
-        .should()
-        .haveModifier(JavaModifier.FINAL)
-        .because("Mapper classes must be final static utility classes [ERR-107]")
-        .check(classes);
+    CodeRules.assertMappersFinal(classes, modulePackage);
   }
 
-  /** Asserts *Mapper classes in the given package are not public. */
+  /**
+   * {@code *Mapper} classes are not public [ERR-107]. Delegates to krizaka-test-support.
+   *
+   * @param classes see {@link CodeRules.assertMappersPackagePrivate}
+   * @param servicePackage see {@link CodeRules.assertMappersPackagePrivate}
+   */
   public static void assertMappersPackagePrivate(JavaClasses classes, String servicePackage) {
-    classes()
-        .that()
-        .resideInAPackage(servicePackage + "..")
-        .and()
-        .haveSimpleNameEndingWith(MAPPER_SUFFIX)
-        .should()
-        .notBePublic()
-        .because("Mapper utilities are internal package-private details [ERR-107]")
-        .check(classes);
+    CodeRules.assertMappersPackagePrivate(classes, servicePackage);
   }
 
   // ─── ERR-109: Persistence Package Hygiene ───
 
-  /** Asserts JPA components reside in correct sub-packs. */
+  /**
+   * JPA converters, entities and repositories live in their sub-packs [ERR-109]. Delegates to
+   * krizaka-test-support.
+   *
+   * @param classes see {@link CodeRules.assertPersistencePackageHygiene}
+   */
   public static void assertPersistencePackageHygiene(JavaClasses classes) {
-    classes()
-        .that()
-        .implement(jakarta.persistence.AttributeConverter.class)
-        .should()
-        .resideInAPackage("..infrastructure.adapter.persistence.converter..")
-        .because("JPA AttributeConverters must live in .converter package [ERR-109]")
-        .check(classes);
-
-    classes()
-        .that()
-        .areAnnotatedWith(jakarta.persistence.Entity.class)
-        .should()
-        .resideInAPackage("..infrastructure.adapter.persistence.entity..")
-        .because("JPA Entity classes must live in .entity package [ERR-109]")
-        .check(classes);
-
-    classes()
-        .that()
-        .areAssignableTo(org.springframework.data.repository.Repository.class)
-        .should()
-        .resideInAPackage("..infrastructure.adapter.persistence.repository..")
-        .because("Spring Data Repositories must live in .repository package [ERR-109]")
-        .check(classes);
+    CodeRules.assertPersistencePackageHygiene(classes);
   }
 
   // ─── ADR-007: Collection Field Immutability ───
 
-  /** Asserts collection fields (List, Map, Set) in non-record classes are private final. */
+  /**
+   * Collection fields are private final [ADR-007]. Delegates to krizaka-test-support.
+   *
+   * @param classes see {@link CodeRules.assertCollectionFieldsPrivateFinal}
+   */
   public static void assertCollectionFieldsPrivateFinal(JavaClasses classes) {
-    fields()
-        .that()
-        .haveRawType(List.class)
-        .or()
-        .haveRawType(Map.class)
-        .or()
-        .haveRawType(Set.class)
-        .and()
-        .areDeclaredInClassesThat()
-        .areNotRecords()
-        .and()
-        .areDeclaredInClassesThat()
-        .areNotEnums()
-        .and()
-        .areDeclaredInClassesThat()
-        .areNotInterfaces()
-        .and()
-        .areDeclaredInClassesThat()
-        .haveSimpleNameNotContaining("Abstract")
-        .and()
-        .areDeclaredInClassesThat()
-        .areNotAnnotatedWith(jakarta.persistence.Entity.class)
-        .should(bePrivateAndFinal())
-        .because(
-            "Collection fields must be private final for immutability [ADR-007, ADR-008]."
-                + " JPA @Entity collections are ORM-managed (Hibernate replaces them on load) and"
-                + " are exempt")
-        .check(classes);
+    CodeRules.assertCollectionFieldsPrivateFinal(classes);
   }
 
   // ─── ADR-009: Fields Must Be Private ───
 
-  /** Asserts instance fields in concrete non-record classes are private. */
+  /**
+   * Instance fields of concrete classes are private [ADR-009]. Delegates to krizaka-test-support.
+   *
+   * @param classes see {@link CodeRules.assertFieldsPrivate}
+   */
   public static void assertFieldsPrivate(JavaClasses classes) {
-    fields()
-        .that()
-        .areDeclaredInClassesThat()
-        .areNotRecords()
-        .and()
-        .areDeclaredInClassesThat()
-        .areNotEnums()
-        .and()
-        .areDeclaredInClassesThat()
-        .areNotInterfaces()
-        .and()
-        .areDeclaredInClassesThat()
-        .haveSimpleNameNotContaining("Abstract")
-        .and()
-        .areNotStatic()
-        .should(
-            new ArchCondition<JavaField>("be private") {
-              @Override
-              public void check(JavaField field, ConditionEvents events) {
-                if (!field.getModifiers().contains(JavaModifier.PRIVATE)) {
-                  events.add(
-                      SimpleConditionEvent.violated(
-                          field,
-                          String.format(
-                              "Field <%s> in <%s> must be private [ADR-009]",
-                              field.getName(), field.getOwner().getName())));
-                }
-              }
-            })
-        .because("Instance fields in concrete classes must be private [ADR-009]")
-        .check(classes);
+    CodeRules.assertFieldsPrivate(classes);
   }
 
   // ─── GOV-001: No Anonymous Classes ───
 
   /**
-   * Asserts no anonymous classes in production (with enum/TypeReference exemption). Compiler
-   * SYNTHETIC classes — e.g. the {@code Outer$1} enum switch-map javac emits for a {@code switch}
-   * over an enum — are not developer-authored and are excluded from the check.
+   * No anonymous class in production [GOV-001]. Delegates to krizaka-test-support.
+   *
+   * @param classes see {@link CodeRules.assertNoAnonymousClasses}
+   * @param modulePackage see {@link CodeRules.assertNoAnonymousClasses}
    */
   public static void assertNoAnonymousClasses(JavaClasses classes, String modulePackage) {
-    classes()
-        .that()
-        .resideInAPackage(modulePackage + "..")
-        .and()
-        .doNotHaveModifier(JavaModifier.SYNTHETIC)
-        .should()
-        .notBeAnonymousClasses()
-        .orShould(beEnumConstantOrTypeReference())
-        .because("Anonymous classes are banned in production [GOV-001]")
-        .check(classes);
+    CodeRules.assertNoAnonymousClasses(classes, modulePackage);
   }
 
   // ─── GOV-004: No Standard Streams ───
 
-  /** Asserts no classes access System.out or System.err. */
+  /**
+   * No class writes to standard streams [GOV-004] — krizaka-test-support's rule.
+   *
+   * @param classes see {@link CodeRules#assertNoStandardStreams}
+   */
   public static void assertNoStandardStreams(JavaClasses classes) {
-    com.tngtech.archunit.library.GeneralCodingRules.NO_CLASSES_SHOULD_ACCESS_STANDARD_STREAMS
-        .because("Use SLF4J loggers instead of standard output/error streams [GOV-004]")
-        .check(classes);
+    CodeRules.assertNoStandardStreams(classes);
   }
 
   // ─── GOV-005: No Field Injection ───
 
-  /** Asserts no @Autowired field injection in the given module package. */
+  /**
+   * No {@code @Autowired} field injection [GOV-005] — krizaka-test-support's rule.
+   *
+   * @param classes see {@link CodeRules#assertNoFieldInjection}
+   * @param modulePackage see {@link CodeRules#assertNoFieldInjection}
+   */
   public static void assertNoFieldInjection(JavaClasses classes, String modulePackage) {
-    noFields()
-        .that()
-        .areDeclaredInClassesThat()
-        .resideInAPackage(modulePackage + "..")
-        .should()
-        .beAnnotatedWith(org.springframework.beans.factory.annotation.Autowired.class)
-        .because("Field injection is prohibited — constructor-based DI is mandatory [GOV-005]")
-        .check(classes);
+    CodeRules.assertNoFieldInjection(classes, modulePackage);
   }
 
   // ─── ERR-112: No Web Controllers in Non-Router ───
 
-  /** Asserts no @RestController or @Controller annotations exist in the given module. */
+  /**
+   * No web controller in the module [ERR-112]. Delegates to krizaka-test-support.
+   *
+   * @param classes see {@link CodeRules.assertNoWebControllers}
+   * @param modulePackage see {@link CodeRules.assertNoWebControllers}
+   */
   public static void assertNoWebControllers(JavaClasses classes, String modulePackage) {
-    classes()
-        .that()
-        .resideInAPackage(modulePackage + "..")
-        .should()
-        .notBeAnnotatedWith(org.springframework.web.bind.annotation.RestController.class)
-        .andShould()
-        .notBeAnnotatedWith(org.springframework.stereotype.Controller.class)
-        .because("Web controllers belong only in orazaka-router [ERR-112]")
-        .check(classes);
+    CodeRules.assertNoWebControllers(classes, modulePackage);
   }
 
   // ─── ERR-129: application/service holds only *Service ───
 
   /**
-   * Asserts every top-level class in {@code servicePackage} is named {@code *Service}
-   * (capability-oriented). A {@code *Mapper}/{@code *Properties}/exception belongs with the code it
-   * serves, not in the service package [ERR-129].
+   * {@code application/service} holds only capability-named {@code *Service} classes [ERR-129] —
+   * krizaka-test-support's rule.
+   *
+   * @param classes see {@link CodeRules#assertServicePackageOnlyServices}
+   * @param servicePackage see {@link CodeRules#assertServicePackageOnlyServices}
    */
   public static void assertServicePackageOnlyServices(JavaClasses classes, String servicePackage) {
-    classes()
-        .that()
-        .resideInAPackage(servicePackage + "..")
-        .and()
-        .areTopLevelClasses()
-        .should()
-        .haveSimpleNameEndingWith("Service")
-        .because(
-            "application/service holds only application *Service (capability-oriented, never"
-                + " pattern-named *Orchestrator/*Manager/*Handler, and not a *Mapper — mapping"
-                + " belongs with the code it maps for) [ERR-129]")
-        .check(classes);
+    CodeRules.assertServicePackageOnlyServices(classes, servicePackage);
   }
 
   // ─── ERR-130: One Package, One Component Kind ───
 
   /**
-   * Asserts the domain package holds no transport DTOs ({@code *Request}/{@code *Response}).
+   * The domain holds no {@code *Request}/{@code *Response} [ERR-130] — krizaka-test-support's rule.
    *
-   * <p>Empty is allowed, as it already is for {@link #assertServicePackageOnlyServices}: a service
-   * host whose domain types live in a Tier-1 contract has no {@code domain} pack of its own, and
-   * ArchUnit's default treats "nothing to check" as a failure. The job service is exactly that
-   * shape — its {@code JobCommand} and friends are in {@code orazaka-jobs-api} — so without this
-   * the rule could not be wired there at all, and a module that later grows a {@code domain} pack
-   * would inherit no guard. Allowing empty keeps the rule armed for that day.
+   * @param classes see {@link CodeRules#assertDomainHasNoTransportDtos}
+   * @param domainPackage see {@link CodeRules#assertDomainHasNoTransportDtos}
    */
   public static void assertDomainHasNoTransportDtos(JavaClasses classes, String domainPackage) {
-    noClasses()
-        .that()
-        .resideInAPackage(domainPackage + "..")
-        .should()
-        .haveSimpleNameEndingWith("Request")
-        .orShould()
-        .haveSimpleNameEndingWith("Response")
-        .because(
-            "Transport DTOs (*Request/*Response) belong in the adapter dto packs, never in"
-                + " domain [ERR-130]")
-        .check(classes);
+    CodeRules.assertDomainHasNoTransportDtos(classes, domainPackage);
   }
 
   /**
@@ -447,25 +304,15 @@ public final class GovernanceRules {
   }
 
   /**
-   * Asserts the exact {@code infrastructure.adapter.persistence} package (excluding its
-   * entity/repository/converter sub-packs) holds only {@code *Adapter}/{@code *Mapper} — one
-   * package, one component kind [ERR-130].
+   * {@code adapter/persistence} holds only {@code *Adapter}/{@code *Mapper} [ERR-130]. Delegates to
+   * krizaka-test-support.
+   *
+   * @param classes see {@link CodeRules.assertPersistenceAdapterPackageKind}
+   * @param modulePackage see {@link CodeRules.assertPersistenceAdapterPackageKind}
    */
   public static void assertPersistenceAdapterPackageKind(
       JavaClasses classes, String modulePackage) {
-    classes()
-        .that()
-        .resideInAPackage(modulePackage + ".infrastructure.adapter.persistence")
-        .and()
-        .areTopLevelClasses()
-        .should()
-        .haveSimpleNameEndingWith("Adapter")
-        .orShould()
-        .haveSimpleNameEndingWith(MAPPER_SUFFIX)
-        .because(
-            "infrastructure/adapter/persistence holds outbound-port adapters (*Adapter) and their"
-                + " mappers (*Mapper) only — one package, one component kind [ERR-130]")
-        .check(classes);
+    CodeRules.assertPersistenceAdapterPackageKind(classes, modulePackage);
   }
 
   // ═══════════════════════════════════════════════════════════════════════
@@ -503,26 +350,13 @@ public final class GovernanceRules {
   }
 
   /**
-   * [HEX-002] Prohibits domain classes from depending on framework packs.
+   * [HEX-002] The domain depends on no framework. Delegates to krizaka-test-support.
    *
-   * <p>The domain layer must remain pristine POJO/Record territory — zero Spring, JPA, or Jackson
-   * dependencies allowed.
+   * @param classes see {@link CodeRules.assertDomainPurity}
+   * @param modulePackage see {@link CodeRules.assertDomainPurity}
    */
   public static void assertDomainPurity(JavaClasses classes, String modulePackage) {
-    noClasses()
-        .that()
-        .resideInAPackage(modulePackage + ".domain..")
-        .should()
-        .dependOnClassesThat()
-        .resideInAnyPackage(
-            "org.springframework..",
-            "jakarta.persistence..",
-            "com.fasterxml.jackson..",
-            "tools.jackson..")
-        .because(
-            "Domain layer must remain framework-free POJO/Record territory."
-                + " No Spring, JPA, or Jackson (2 or 3) allowed [HEX-002]")
-        .check(classes);
+    CodeRules.assertDomainPurity(classes, modulePackage);
   }
 
   // ─── Private ArchCondition Helpers ───
@@ -657,43 +491,13 @@ public final class GovernanceRules {
           "requestMatchers\\(\\s*\"([^\"]*(?:/internal|/uploads)[^\"]*)\"\\s*\\)\\s*\\.\\s*permitAll");
 
   /**
-   * Fails when a service that serves HTTP does not run its requests on virtual threads.
+   * A service that serves HTTP runs on virtual threads (AGENTS.md §4). Delegates to
+   * krizaka-test-support.
    *
-   * <p>AGENTS.md §4 mandates {@code spring.threads.virtual.enabled=true} without reservation, and
-   * two services of eight had silently drifted without it — including the interactive ingress,
-   * which holds an SSE stream open for the whole exchange. On the default Tomcat pool that is a
-   * ceiling of 200 concurrent conversations, reached with no error and no log line.
-   *
-   * <p>A configuration rule rather than an ArchUnit one because the subject is a YAML key, and
-   * because the mistake is an *omission*: there is no class to inspect for a setting nobody wrote.
-   * That is exactly why it went unnoticed — the contract said it, and nothing could see it.
-   *
-   * <p>Skipped for a module with no {@code application.yml} or no web server: a pure library has no
-   * request pool to configure.
-   *
-   * @param moduleRoot the module directory (usually {@code System.getProperty("user.dir")})
+   * @param moduleRoot see {@link SourceRules.assertVirtualThreadsEnabled}
    */
   public static void assertVirtualThreadsEnabled(Path moduleRoot) {
-    Path config = moduleRoot.resolve("src/main/resources/application.yml");
-    GovernanceSubjects.require(
-        "AGENTS.md §4",
-        "application.yml at " + config,
-        Files.isRegularFile(config) ? List.of(config) : List.of());
-    String yaml;
-    try {
-      yaml = Files.readString(config);
-    } catch (IOException e) {
-      throw new UncheckedIOException("Failed to read " + config, e);
-    }
-    // Comments stripped: this block's own rationale names the setting, and a rule that reads its
-    // justification as compliance is a rule that passes on a service which opted out in prose.
-    String code = yaml.replaceAll("(?m)^\\s*#.*$", "");
-    if (!VIRTUAL_THREADS_ENABLED.matcher(code).find()) {
-      throw new AssertionError(
-          "AGENTS.md §4 requires spring.threads.virtual.enabled=true — blocking I/O on a platform"
-              + " thread caps this service at the Tomcat pool size, silently: "
-              + config);
-    }
+    SourceRules.assertVirtualThreadsEnabled(moduleRoot);
   }
 
   // ═══════════════════════════════════════════════════════════════════════
@@ -781,47 +585,6 @@ public final class GovernanceRules {
   }
 
   /** {@code threads: virtual: enabled: true}, whatever the surrounding indentation. */
-  private static final Pattern VIRTUAL_THREADS_ENABLED =
-      Pattern.compile("threads:\\s*\\n\\s*virtual:\\s*\\n\\s*enabled:\\s*true");
-
-  private static ArchCondition<JavaField> bePrivateAndFinal() {
-    return new ArchCondition<>("be private and final") {
-      @Override
-      public void check(JavaField field, ConditionEvents events) {
-        boolean isPrivate = field.getModifiers().contains(JavaModifier.PRIVATE);
-        boolean isFinal = field.getModifiers().contains(JavaModifier.FINAL);
-        if (!isPrivate || !isFinal) {
-          events.add(
-              SimpleConditionEvent.violated(
-                  field,
-                  String.format(
-                      "Field <%s> in <%s> is not private final (private=%s, final=%s)",
-                      field.getName(), field.getOwner().getName(), isPrivate, isFinal)));
-        }
-      }
-    };
-  }
-
-  private static ArchCondition<com.tngtech.archunit.core.domain.JavaClass>
-      beEnumConstantOrTypeReference() {
-    return new ArchCondition<>("be an enum constant body or TypeReference") {
-      @Override
-      public void check(
-          com.tngtech.archunit.core.domain.JavaClass javaClass, ConditionEvents events) {
-        boolean isEnumBody = javaClass.getEnclosingClass().map(JavaClass::isEnum).orElse(false);
-        boolean isTypeRef =
-            javaClass
-                .getSuperclass()
-                .map(superClass -> superClass.getName().contains("TypeReference"))
-                .orElse(false);
-        if (!isEnumBody && !isTypeRef) {
-          events.add(
-              SimpleConditionEvent.violated(
-                  javaClass, "Anonymous class <" + javaClass.getName() + "> is not exempt"));
-        }
-      }
-    };
-  }
 
   /**
    * [CAP-001] One record models a capability, and the projections of it say so.
@@ -1046,7 +809,9 @@ public final class GovernanceRules {
     List<String> offenders = new ArrayList<>();
     for (Path file : sources) {
       // The rules name the table in order to forbid it; that is not authoring a dedup.
-      if (!file.toString().endsWith(".java") || file.toString().contains("orazaka-test-support")) {
+      if (!file.toString().endsWith(".java")
+          || file.toString().contains("orazaka-test-support")
+          || isTheKit(file)) {
         continue;
       }
       // Code, not comments: naming a defect in order to record it is not committing it.
@@ -1094,7 +859,7 @@ public final class GovernanceRules {
       }
     }
     for (Path file : sources) {
-      if (file.getFileName().toString().equals("OutboxRelay.java")) {
+      if (file.getFileName().toString().equals("OutboxRelay.java") && !isTheKit(file)) {
         offenders.add(
             serviceOf(file) + " writes its own OutboxRelay; the relay is krizaka-messaging's");
       }
@@ -1128,7 +893,8 @@ public final class GovernanceRules {
     List<String> offenders = new ArrayList<>();
     for (Path file : sources) {
       String name = file.getFileName().toString();
-      if (name.equals("SessionJwtProperties.java") || name.equals("ServiceTokenProvider.java")) {
+      if ((name.equals("SessionJwtProperties.java") || name.equals("ServiceTokenProvider.java"))
+          && !isTheKit(file)) {
         offenders.add(serviceOf(file) + " keeps its own " + name);
       }
     }
@@ -1136,6 +902,14 @@ public final class GovernanceRules {
         offenders.isEmpty(),
         "[KIT-004] the session secret and the service token are krizaka-security's (ADR-073):\n  "
             + String.join("\n  ", offenders));
+  }
+
+  /**
+   * Whether a source belongs to krizaka-platform-kit — the one author the KIT rules point every
+   * other source to, and therefore the one place their implementations are allowed.
+   */
+  private static boolean isTheKit(Path file) {
+    return file.toString().contains("krizaka-platform-kit");
   }
 
   /** The service a source file belongs to, for a message an operator can act on. */

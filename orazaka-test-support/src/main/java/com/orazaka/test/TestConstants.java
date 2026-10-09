@@ -126,7 +126,7 @@ public final class TestConstants {
   public static final String PKG_CORE = "com.orazaka.core..";
 
   /** Identity module package pattern for ArchUnit. */
-  public static final String PKG_IDENTITY = "com.orazaka.identity..";
+  public static final String PKG_IDENTITY = "com.krizaka.users..";
 
   /** Router module package pattern for ArchUnit. */
   public static final String PKG_ROUTER = "com.orazaka.conversationservice..";

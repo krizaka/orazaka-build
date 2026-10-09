@@ -3,6 +3,7 @@ package com.orazaka.test.architecture;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
+import com.krizaka.test.sql.InitDb;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
@@ -75,15 +76,7 @@ public final class SqlBoundaryRules {
    * @return the initdb directory
    */
   public static Path locateInitDb(Path startDir) {
-    Path current = startDir.toAbsolutePath();
-    while (current != null) {
-      Path candidate = current.resolve("infra").resolve("initdb");
-      if (Files.isDirectory(candidate)) {
-        return candidate;
-      }
-      current = current.getParent();
-    }
-    throw new IllegalStateException("Could not locate infra/initdb walking up from " + startDir);
+    return InitDb.locate(startDir);
   }
 
   /**

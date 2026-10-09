@@ -130,7 +130,7 @@ public final class PackPurityRules {
 
   /** Where engine code lives. A pack's own directory is not engine code and is not scanned. */
   private static final List<String> SCANNED_ROOTS =
-      List.of("orazaka-libs", "orazaka-apps/services", "orazaka-apps/workers");
+      List.of("krizaka", "orazaka-libs", "orazaka-apps/services", "orazaka-apps/workers");
 
   /**
    * Branching forms. {@code ==} and {@code !=} are here for Python, where the known violation was

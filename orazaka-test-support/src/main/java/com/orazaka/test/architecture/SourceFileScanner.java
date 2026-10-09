@@ -2,6 +2,7 @@ package com.orazaka.test.architecture;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.krizaka.test.architecture.SourceRules;
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -68,15 +69,7 @@ public final class SourceFileScanner {
    * classes [ERR-113]. Asserts no violations found.
    */
   public static void assertNoEnvironmentInjection(Path sourceRoot) {
-    GovernanceSubjects.require(
-        "ERR-113",
-        "Java sources under " + sourceRoot,
-        Files.exists(sourceRoot) ? collectJavaFiles(sourceRoot) : List.of());
-    List<String> violations = scanForEnvironmentInjection(sourceRoot);
-    assertTrue(
-        violations.isEmpty(),
-        "Production source injects Environment directly [ERR-113]:\n"
-            + String.join("\n", violations));
+    SourceRules.assertNoEnvironmentInjection(sourceRoot);
   }
 
   // ─── Internal Scanners ───
@@ -100,43 +93,6 @@ public final class SourceFileScanner {
                           file.getName() + ":" + lineNum + " -> " + pattern.label() + ": " + line);
                     }
                   }
-                }
-              } catch (IOException e) {
-                throw new UncheckedIOException("Failed to scan " + file.getName(), e);
-              }
-            });
-    return violations;
-  }
-
-  private static List<String> scanForEnvironmentInjection(Path sourceRoot) {
-    List<String> violations = new ArrayList<>();
-    collectJavaFiles(sourceRoot)
-        .forEach(
-            file -> {
-              boolean isConfigClass = false;
-              int lineNum = 0;
-              try (LineIterator it = FileUtils.lineIterator(file, StandardCharsets.UTF_8.name())) {
-                List<String> deferredViolations = new ArrayList<>();
-                while (it.hasNext()) {
-                  lineNum++;
-                  String line = it.next().trim();
-                  if (line.contains("@Configuration")) {
-                    isConfigClass = true;
-                  }
-                  if (isComment(line)) {
-                    continue;
-                  }
-                  if (line.contains("org.springframework.core.env.Environment")) {
-                    deferredViolations.add(
-                        file.getName()
-                            + ":"
-                            + lineNum
-                            + " -> Environment injection (use @ConfigurationProperties): "
-                            + line);
-                  }
-                }
-                if (!isConfigClass) {
-                  violations.addAll(deferredViolations);
                 }
               } catch (IOException e) {
                 throw new UncheckedIOException("Failed to scan " + file.getName(), e);
