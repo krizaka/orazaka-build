@@ -88,7 +88,7 @@ public final class PackPurityRules {
           "messaging", // orazaka.messaging.broker
           "metering", // orazaka.metering.deferred — the BILL-001 marker
           // Added by the change that split the notification context out of automation: its own
-          // request queue (orazaka.notifications.requests) is engine wiring, not a pack.
+          // request queue (krizaka.notifications.requests) is engine wiring, not a pack.
           "notifications", // orazaka.notifications.* — the notification service's queues
           "pipeline", // orazaka.pipeline.* — a Context preference namespace
           "safety", // orazaka.safety.crisis-terms — the crisis guard's wire keys (ADR-055)
