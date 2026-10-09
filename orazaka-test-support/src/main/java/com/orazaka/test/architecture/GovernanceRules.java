@@ -989,18 +989,14 @@ public final class GovernanceRules {
   }
 
   /**
-   * [KIT-001] Every service's security baseline says the same four things.
+   * [KIT-001] Every service's filter chain starts from the one security baseline.
    *
-   * <p>The invariant: <i>which paths are open, which require SERVICE, which require a user.</i> It
-   * has one author per service — six — and consolidating the TYPE would need a shared module that
-   * does not exist: the only dependency all six share today is {@code orazaka-test-support}, which
-   * is test-scoped. A new Tier-2 module is a permanent per-service cost, so the author consolidated
-   * here is the RULE (ADR-058 §4).
-   *
-   * <p>Measured before writing it: two of the six diverged. {@code identity-service} declared no
-   * CORS preflight exemption and no {@code /error}; {@code conversation-service} omitted {@code
-   * /actuator/info}. The rule that had been fixed by hand five times — {@code /internal/v1}
-   * requiring {@code SERVICE} — was the one that was consistent, which is the whole lesson.
+   * <p>The invariant: <i>which paths are open, which require SERVICE, which require a user.</i>
+   * Measured across six services it had six authors, and two had drifted — {@code identity-service}
+   * declared no CORS preflight exemption and no {@code /error}, {@code conversation-service}
+   * omitted {@code /actuator/info} (ADR-058 §3). It now has one author, krizaka-security's {@code
+   * SecurityBaseline}, and the rule is that every {@code SecurityConfig} applies it: a service that
+   * builds its chain by hand is the seventh author again (ADR-073).
    *
    * @param repositoryRoot the repository root
    */
@@ -1015,141 +1011,130 @@ public final class GovernanceRules {
                 .filter(file -> file.getFileName().toString().equals("SecurityConfig.java"))
                 .toList());
     for (Path file : securityConfigs) {
-      String source = readSource(file);
-      String service = serviceOf(file);
-      if (!source.contains("HttpMethod.OPTIONS")) {
-        offenders.add(service + " exempts no CORS preflight: a preflight carries no credentials");
-      }
-      if (!source.contains("\"/error\"")) {
-        offenders.add(service + " requires authentication for /error: a failure becomes two");
-      }
-      if (!source.contains("/actuator/health")) {
-        offenders.add(service + " does not exempt /actuator/health");
-      }
-      if (source.contains("/internal/v1") && !source.contains("SERVICE")) {
-        offenders.add(service + " exposes /internal/v1 without requiring SERVICE");
+      String source = withoutComments(readSource(file));
+      if (!source.contains("SecurityBaseline.apply(")) {
+        offenders.add(serviceOf(file) + " builds its filter chain without SecurityBaseline.apply");
       }
     }
     assertTrue(
         offenders.isEmpty(),
-        "[KIT-001] the security baseline is one rule with six authors; a service that omits part"
-            + " of it is how /internal/v1 stayed open in three services at once (ADR-058 §4):\n  "
+        "[KIT-001] the security baseline has one author, krizaka-security; a chain built by hand is"
+            + " how /internal/v1 stayed open in three services at once (ADR-058, ADR-073):\n  "
             + String.join("\n  ", offenders));
   }
 
   /**
-   * [KIT-002] Message deduplication is a claim, never a check followed by an act.
+   * [KIT-002] Message deduplication has one author: krizaka-messaging.
    *
    * <p>The invariant: <i>a message seen twice is processed once, and a message whose processing
-   * failed is seen again.</i> It had four authors and none of them held it — three did {@code
-   * SELECT EXISTS} then {@code INSERT}, which loses the race it exists to win, and the fourth
-   * claimed without ever releasing, turning a handler exception into a lost message (ADR-058 §2).
+   * failed is seen again.</i> It had five authors and none of them held both halves — three checked
+   * then acted, one claimed and never released (ADR-058 §2). The kit's {@code MessageDedup} holds
+   * both; this rule fails on any production code that claims {@code processed_messages} itself or
+   * declares a dedup type of its own, so the sixth author is caught the day it is written.
    *
    * @param repositoryRoot the repository root
    */
   public static void assertDedupIsAtomic(Path repositoryRoot) {
     Workspace.require(repositoryRoot, "KIT-002");
+    List<Path> sources = PackPurityRules.productionSources(repositoryRoot);
+    GovernanceSubjects.require(
+        "KIT-002",
+        "listeners using krizaka-messaging's MessageDedup",
+        sources.stream()
+            .filter(file -> readSource(file).contains("import com.krizaka.messaging.dedup."))
+            .toList());
     List<String> offenders = new ArrayList<>();
-    List<Path> dedupSources =
-        GovernanceSubjects.require(
-            "KIT-002",
-            "MessageDedupService sources",
-            PackPurityRules.productionSources(repositoryRoot).stream()
-                .filter(file -> file.getFileName().toString().startsWith("MessageDedupService"))
-                .toList());
-    for (Path file : dedupSources) {
-      String name = file.getFileName().toString();
-      // Code, not comments. The javadoc on these classes explains the shape they used to have,
-      // and naming a defect in order to record it is not committing it.
-      String source = withoutComments(readSource(file));
-      if (source.contains("SELECT EXISTS") || source.contains("isDuplicate")) {
-        offenders.add(name + " checks before acting; two deliveries pass the check together");
-      }
-      if (source.contains("interface ")) {
+    for (Path file : sources) {
+      // The rules name the table in order to forbid it; that is not authoring a dedup.
+      if (!file.toString().endsWith(".java") || file.toString().contains("orazaka-test-support")) {
         continue;
       }
-      if (!source.contains("claim(")) {
-        offenders.add(name + " offers no atomic claim");
-      }
-      if (!source.contains("release(")) {
-        offenders.add(name + " offers no release, so a failed message is never seen again");
+      // Code, not comments: naming a defect in order to record it is not committing it.
+      String source = withoutComments(readSource(file));
+      if (source.contains("processed_messages")
+          || source.matches("(?s).*\\b(class|interface|record)\\s+\\w*Dedup\\w*.*")) {
+        offenders.add(serviceOf(file) + "/" + file.getFileName() + " is its own dedup author");
       }
     }
     assertTrue(
         offenders.isEmpty(),
-        "[KIT-002] dedup claims atomically and releases on failure (ADR-058 §2):\n  "
+        "[KIT-002] dedup claims atomically and releases on failure — use krizaka-messaging's"
+            + " MessageDedup (ADR-058 §2, ADR-073):\n  "
             + String.join("\n  ", offenders));
   }
 
   /**
-   * [KIT-003] An outbox relay claims the rows it publishes.
+   * [KIT-003] An outbox store claims the rows the relay publishes, and the relay has one author.
    *
-   * <p>The invariant: <i>an outbox row is published once.</i> Four authors, and one — the studio
-   * service — selected pending rows with no lock at all, published them, and only then marked them.
-   * A second instance reading between the select and the mark publishes the same row again. It had
-   * never bitten because there is one instance, which is the kind of correctness that expires on
-   * the day something is scaled (ADR-058 §3).
+   * <p>The invariant: <i>an outbox row is published once.</i> The relay is krizaka-messaging's;
+   * what stays with each context is its store, and the store's {@code lockPendingBatch} is where
+   * the claim lives. One of four relays selected pending rows with no lock at all — a second
+   * instance reading between the select and the mark publishes the same row again (ADR-058 §3). So
+   * every select of pending rows must say {@code SKIP LOCKED}, and no context may write a relay of
+   * its own.
    *
    * @param repositoryRoot the repository root
    */
   public static void assertOutboxRelaysClaim(Path repositoryRoot) {
     Workspace.require(repositoryRoot, "KIT-003");
     List<String> offenders = new ArrayList<>();
-    List<Path> relays =
+    List<Path> sources = PackPurityRules.productionSources(repositoryRoot);
+    List<Path> pendingSelects =
         GovernanceSubjects.require(
             "KIT-003",
-            "OutboxRelay / OutboxEventRepository sources",
-            PackPurityRules.productionSources(repositoryRoot).stream()
-                .filter(
-                    file ->
-                        file.getFileName().toString().equals("OutboxRelay.java")
-                            || file.getFileName().toString().startsWith("OutboxEventRepository"))
+            "sources selecting pending outbox rows",
+            sources.stream()
+                .filter(file -> file.toString().endsWith(".java"))
+                .filter(file -> readSource(file).contains("published_at IS NULL"))
                 .toList());
-    for (Path file : relays) {
-      String name = file.getFileName().toString();
-      String source = readSource(file);
-      boolean selectsPending = source.contains("published_at IS NULL");
-      if (selectsPending && !source.contains("SKIP LOCKED")) {
-        offenders.add(serviceOf(file) + "/" + name + " selects pending rows without claiming them");
+    for (Path file : pendingSelects) {
+      if (!readSource(file).contains("SKIP LOCKED")) {
+        offenders.add(
+            serviceOf(file) + "/" + file.getFileName() + " selects pending rows without claiming");
+      }
+    }
+    for (Path file : sources) {
+      if (file.getFileName().toString().equals("OutboxRelay.java")) {
+        offenders.add(
+            serviceOf(file) + " writes its own OutboxRelay; the relay is krizaka-messaging's");
       }
     }
     assertTrue(
         offenders.isEmpty(),
-        "[KIT-003] an outbox relay claims what it publishes — FOR UPDATE SKIP LOCKED — or two"
-            + " instances publish the same row (ADR-058 §3):\n  "
+        "[KIT-003] an outbox store claims what it hands the relay — FOR UPDATE SKIP LOCKED — or two"
+            + " instances publish the same row (ADR-058 §3, ADR-073):\n  "
             + String.join("\n  ", offenders));
   }
 
   /**
-   * [KIT-004] The session JWT minimum is one number with five authors, and they agree.
+   * [KIT-004] Session-token security has one author: krizaka-security.
    *
-   * <p>{@code SessionJwtProperties} is byte-identical in five services and carries a real security
-   * rule: the HS256 secret is at least 32 characters. Consolidating the TYPE would create a shared
-   * module to hold ten lines; the rule below costs nothing and catches the only failure that
-   * matters — one copy relaxing while the others do not (ADR-058 §4).
+   * <p>{@code SessionJwtProperties} was byte-identical in five services and {@code
+   * ServiceTokenProvider} in seven; the first carries the 256-bit minimum of the HS256 secret, the
+   * second the exact claim shape every {@code /internal/v1} matcher expects. A copy is a place to
+   * relax one of them while the others do not, so the rule is that there is no copy (ADR-073).
    *
    * @param repositoryRoot the repository root
    */
-  public static void assertSessionSecretMinimumIsUniform(Path repositoryRoot) {
+  public static void assertSessionSecurityHasOneAuthor(Path repositoryRoot) {
     Workspace.require(repositoryRoot, "KIT-004");
+    List<Path> sources = PackPurityRules.productionSources(repositoryRoot);
+    GovernanceSubjects.require(
+        "KIT-004",
+        "sources using krizaka-security",
+        sources.stream()
+            .filter(file -> readSource(file).contains("import com.krizaka.security."))
+            .toList());
     List<String> offenders = new ArrayList<>();
-    List<Path> copies =
-        GovernanceSubjects.require(
-            "KIT-004",
-            "SessionJwtProperties.java files",
-            PackPurityRules.productionSources(repositoryRoot).stream()
-                .filter(file -> file.getFileName().toString().equals("SessionJwtProperties.java"))
-                .toList());
-    for (Path file : copies) {
-      String source = readSource(file);
-      if (!source.contains("length() < 32")) {
-        offenders.add(serviceOf(file) + " does not require a 32-character session secret");
+    for (Path file : sources) {
+      String name = file.getFileName().toString();
+      if (name.equals("SessionJwtProperties.java") || name.equals("ServiceTokenProvider.java")) {
+        offenders.add(serviceOf(file) + " keeps its own " + name);
       }
     }
     assertTrue(
         offenders.isEmpty(),
-        "[KIT-004] every copy of SessionJwtProperties enforces the same 256-bit minimum"
-            + " (ADR-058 §4):\n  "
+        "[KIT-004] the session secret and the service token are krizaka-security's (ADR-073):\n  "
             + String.join("\n  ", offenders));
   }
 
