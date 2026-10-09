@@ -124,16 +124,6 @@
             </dependency>
             <dependency>
                 <groupId>com.krizaka.orazaka</groupId>
-                <artifactId>orazaka-billing-api</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.krizaka.orazaka</groupId>
-                <artifactId>orazaka-billing-client</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.krizaka.orazaka</groupId>
                 <artifactId>orazaka-studio-api</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -180,11 +170,6 @@
             <dependency>
                 <groupId>com.krizaka.orazaka</groupId>
                 <artifactId>orazaka-persistence-bridge</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.krizaka.orazaka</groupId>
-                <artifactId>orazaka-notification-api</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <!-- Shared Test Support -->

@@ -73,7 +73,7 @@ public final class PackPurityRules {
   private static final Set<String> ENGINE_NAMESPACES =
       Set.of(
           "assets", // orazaka.assets.encryption.* — the envelope's own wiring (ADR-054)
-          "billing", // orazaka.billing.hold.released.credits — the ledger's own metrics
+          "billing", // krizaka.billing.hold.released.credits — the ledger's own metrics
           "core", // orazaka.core.chat.completion — the engine's own capabilities
           "edge", // orazaka.edge.identity — the transport facade's wiring
           // Added by the same change that introduced it (ADR-050) — the rule fired on it first,
