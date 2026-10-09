@@ -1,4 +1,4 @@
-package com.orazaka.test.architecture;
+package com.krizaka.orazaka.test.architecture;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -73,7 +73,7 @@ public final class PackPurityRules {
   private static final Set<String> ENGINE_NAMESPACES =
       Set.of(
           "assets", // orazaka.assets.encryption.* — the envelope's own wiring (ADR-054)
-          "billing", // orazaka.billing.hold.released.credits — the ledger's own metrics
+          "billing", // krizaka.billing.hold.released.credits — the ledger's own metrics
           "core", // orazaka.core.chat.completion — the engine's own capabilities
           "edge", // orazaka.edge.identity — the transport facade's wiring
           // Added by the same change that introduced it (ADR-050) — the rule fired on it first,
@@ -88,7 +88,7 @@ public final class PackPurityRules {
           "messaging", // orazaka.messaging.broker
           "metering", // orazaka.metering.deferred — the BILL-001 marker
           // Added by the change that split the notification context out of automation: its own
-          // request queue (orazaka.notifications.requests) is engine wiring, not a pack.
+          // request queue (krizaka.notifications.requests) is engine wiring, not a pack.
           "notifications", // orazaka.notifications.* — the notification service's queues
           "pipeline", // orazaka.pipeline.* — a Context preference namespace
           "safety", // orazaka.safety.crisis-terms — the crisis guard's wire keys (ADR-055)
@@ -130,7 +130,7 @@ public final class PackPurityRules {
 
   /** Where engine code lives. A pack's own directory is not engine code and is not scanned. */
   private static final List<String> SCANNED_ROOTS =
-      List.of("orazaka-libs", "orazaka-apps/services", "orazaka-apps/workers");
+      List.of("krizaka", "orazaka-libs", "orazaka-apps/services", "orazaka-apps/workers");
 
   /**
    * Branching forms. {@code ==} and {@code !=} are here for Python, where the known violation was

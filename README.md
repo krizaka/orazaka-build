@@ -26,8 +26,8 @@ part of the [Orazaka platform](https://github.com/krizaka/orazaka) by [Krizaka](
 
 | Module | Artifact | Role |
 |:---|:---|:---|
-| `orazaka-parent` | `com.orazaka:orazaka-parent` (pom) | Java 21, Spring Boot 4.0 + Spring AI 2.0 BOMs, the **Orazaka BOM** (every component at one platform version), Spotless (google-java-format), JaCoCo, Surefire/Failsafe, `dev`/`staging`/`prod` profiles, GitHub Packages distribution. |
-| `orazaka-test-support` | `com.orazaka:orazaka-test-support` | The governance kit: ArchUnit rules (`GovernanceRules`, naming, tiers, security, outbox, metering…), SQL seam rules, Testcontainers singletons (`AbstractContainerIntegrationTest`), workspace locator. |
+| `orazaka-parent` | `com.krizaka.orazaka:orazaka-parent` (pom) | Java 21, Spring Boot 4.0 + Spring AI 2.0 BOMs, the **Orazaka BOM** (every component at one platform version), Spotless (google-java-format), JaCoCo, Surefire/Failsafe, `dev`/`staging`/`prod` profiles, GitHub Packages distribution. |
+| `orazaka-test-support` | `com.krizaka.orazaka:orazaka-test-support` | The governance kit: ArchUnit rules (`GovernanceRules`, naming, tiers, security, outbox, metering…), SQL seam rules, Testcontainers singletons (`AbstractContainerIntegrationTest`), workspace locator. |
 
 ## Use it
 
@@ -35,7 +35,7 @@ Every Orazaka JVM repository inherits the parent:
 
 ```xml
 <parent>
-    <groupId>com.orazaka</groupId>
+    <groupId>com.krizaka.orazaka</groupId>
     <artifactId>orazaka-parent</artifactId>
     <version>1.0.0-SNAPSHOT</version>
     <relativePath/>
@@ -46,7 +46,7 @@ and runs the governance rules from its tests:
 
 ```xml
 <dependency>
-    <groupId>com.orazaka</groupId>
+    <groupId>com.krizaka.orazaka</groupId>
     <artifactId>orazaka-test-support</artifactId>
     <scope>test</scope>
 </dependency>
@@ -67,7 +67,7 @@ clone — never as passed.
 | | |
 |:---|:---|
 | Depends on | _none — this repository is a root of the dependency graph._ |
-| Used by | [`orazaka-contracts`](https://github.com/krizaka/orazaka-contracts) · [`orazaka-users`](https://github.com/krizaka/orazaka-users) · [`orazaka-notifications`](https://github.com/krizaka/orazaka-notifications) · [`orazaka-billing`](https://github.com/krizaka/orazaka-billing) · [`orazaka-studio`](https://github.com/krizaka/orazaka-studio) · [`orazaka-ai-engine`](https://github.com/krizaka/orazaka-ai-engine) · [`orazaka-conversation-service`](https://github.com/krizaka/orazaka-conversation-service) · [`orazaka-job-service`](https://github.com/krizaka/orazaka-job-service) · [`orazaka-knowledge-service`](https://github.com/krizaka/orazaka-knowledge-service) · [`orazaka-automation-service`](https://github.com/krizaka/orazaka-automation-service) · [`orazaka-edge`](https://github.com/krizaka/orazaka-edge) |
+| Used by | [`orazaka-contracts`](https://github.com/krizaka/orazaka-contracts) · [`krizaka-users`](https://github.com/krizaka/krizaka-users) · [`krizaka-notifications`](https://github.com/krizaka/krizaka-notifications) · [`krizaka-billing`](https://github.com/krizaka/krizaka-billing) · [`orazaka-studio`](https://github.com/krizaka/orazaka-studio) · [`orazaka-ai-engine`](https://github.com/krizaka/orazaka-ai-engine) · [`orazaka-conversation-service`](https://github.com/krizaka/orazaka-conversation-service) · [`orazaka-job-service`](https://github.com/krizaka/orazaka-job-service) · [`orazaka-knowledge-service`](https://github.com/krizaka/orazaka-knowledge-service) · [`orazaka-automation-service`](https://github.com/krizaka/orazaka-automation-service) · [`orazaka-edge`](https://github.com/krizaka/orazaka-edge) |
 | Workspace path | `orazaka-libs/orazaka-build` |
 
 ## Build

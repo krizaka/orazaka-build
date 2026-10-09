@@ -1,8 +1,8 @@
-package com.orazaka.test.bootstrap;
+package com.krizaka.orazaka.test.bootstrap;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.orazaka.test.architecture.Workspace;
+import com.krizaka.orazaka.test.architecture.Workspace;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Connection;
@@ -118,15 +118,17 @@ class SeedBootstrapIT {
   void eachContextHasItsDatabase() {
     List<String> databases =
         strings(
-            "SELECT datname FROM pg_database WHERE datname LIKE 'orazaka%' ORDER BY 1", DATABASE);
+            "SELECT datname FROM pg_database WHERE datname LIKE 'orazaka%' OR datname LIKE 'krizaka%'"
+                + " ORDER BY 1",
+            DATABASE);
 
     assertThat(databases)
         .contains(
             "orazaka_db",
-            "orazaka_identity_db",
+            "krizaka_users_db",
             "orazaka_knowledge_db",
             "orazaka_automation_db",
-            "orazaka_billing_db",
+            "krizaka_billing_db",
             "orazaka_studio_db");
   }
 
@@ -188,7 +190,7 @@ class SeedBootstrapIT {
     List<String> capabilities =
         strings(
             "SELECT DISTINCT capability FROM credit_pricebook WHERE effective_to IS NULL ORDER BY 1",
-            "orazaka_billing_db");
+            "krizaka_billing_db");
 
     assertThat(capabilities).contains("CHAT", "IMAGE", "VIDEO", "AUDIO", "AGENT");
   }
@@ -210,7 +212,7 @@ class SeedBootstrapIT {
         strings(
             "SELECT DISTINCT capability || ' ' || unit FROM credit_pricebook"
                 + " WHERE effective_to IS NULL",
-            "orazaka_billing_db");
+            "krizaka_billing_db");
 
     assertThat(declared).as("capabilities declaring a unit").hasSizeGreaterThanOrEqualTo(8);
     assertThat(declared)
@@ -252,7 +254,7 @@ class SeedBootstrapIT {
         strings(
             "SELECT DISTINCT entitlement_key FROM billing_plan_entitlement"
                 + " WHERE value = 'true' ORDER BY 1",
-            "orazaka_billing_db");
+            "krizaka_billing_db");
 
     assertThat(publishedStudios)
         .allSatisfy(

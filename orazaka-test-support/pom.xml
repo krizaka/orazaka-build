@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>com.orazaka</groupId>
+        <groupId>com.krizaka.orazaka</groupId>
         <artifactId>orazaka-build</artifactId>
         <version>1.0.0-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
@@ -20,6 +20,12 @@
     </properties>
 
     <dependencies>
+        <!-- The generic half of the governance kit — code rules, initdb locator, service roles —
+             is Krizaka's; the Orazaka rules below build on it. -->
+        <dependency>
+            <groupId>com.krizaka</groupId>
+            <artifactId>krizaka-test-support</artifactId>
+        </dependency>
         <!-- ASM tree + analysis for [LOG-001] (ADR-064): which values reach a logging call is an
              operand-stack question, and ArchUnit answers only which methods are called. The analysis
              artifact is the 9.2 already in the local repository — the build is offline (AGENTS.md

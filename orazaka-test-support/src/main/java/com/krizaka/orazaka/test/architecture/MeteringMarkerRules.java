@@ -1,4 +1,4 @@
-package com.orazaka.test.architecture;
+package com.krizaka.orazaka.test.architecture;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 

@@ -1,4 +1,4 @@
-package com.orazaka.test.architecture;
+package com.krizaka.orazaka.test.architecture;
 
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -115,7 +115,7 @@ public final class RunSurfaceRules {
   private static final String RULE = "DOOR-001";
 
   /** This rule family's own package: its sources describe dispatch, they do not perform it. */
-  private static final String RULES_PACKAGE = "com.orazaka.test.architecture.";
+  private static final String RULES_PACKAGE = "com.krizaka.orazaka.test.architecture.";
 
   /** The exchange a job command travels on (AGENTS.md §6). */
   private static final String JOBS_EXCHANGE = "orazaka.jobs";
@@ -152,7 +152,7 @@ public final class RunSurfaceRules {
    * built the argument otherwise; a controller that reaches any other dispatcher does not.
    */
   static final String RUN_DISPATCH_SEAM =
-      "com.orazaka.studioservice.domain.port.StepExecutionClient";
+      "com.krizaka.orazaka.studioservice.domain.port.StepExecutionClient";
 
   /** Spring's inbound-HTTP stereotypes. */
   private static final Set<String> WEB_STEREOTYPES =
@@ -172,9 +172,9 @@ public final class RunSurfaceRules {
   private static final List<Exemption> EXEMPTIONS =
       List.of(
           new Exemption(
-              "com.orazaka.conversationservice.infrastructure.adapter.rest.JobController"
+              "com.krizaka.orazaka.conversationservice.infrastructure.adapter.rest.JobController"
                   + ".approveJob",
-              "com.orazaka.conversationservice.application.service.JobQueuePublisherService",
+              "com.krizaka.orazaka.conversationservice.application.service.JobQueuePublisherService",
               "approval is a gate in front of work already written, not an entry: the job row and"
                   + " its payload were written when the automation ran, and this endpoint releases"
                   + " it (ADR-068 §5, established when the compiler refused the deletion)"));
@@ -192,7 +192,7 @@ public final class RunSurfaceRules {
     assertNoInboundEntryDispatchesAJob(
         new ClassFileImporter()
             .withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS)
-            .importPackages("com.orazaka"));
+            .importPackages("com.krizaka.orazaka"));
   }
 
   /**
@@ -260,7 +260,7 @@ public final class RunSurfaceRules {
    * Whether Spring exposes this class as an inbound HTTP entry — by annotation, never by package.
    */
   private static boolean isInboundHttpEntry(JavaClass type) {
-    if (!type.getPackageName().startsWith("com.orazaka")) {
+    if (!type.getPackageName().startsWith("com.krizaka.orazaka")) {
       return false;
     }
     boolean stereotyped =
@@ -364,7 +364,7 @@ public final class RunSurfaceRules {
         .forEach(
             call -> {
               JavaClass owner = call.getTargetOwner();
-              if (!owner.getPackageName().startsWith("com.orazaka")) {
+              if (!owner.getPackageName().startsWith("com.krizaka.orazaka")) {
                 return;
               }
               String name = call.getTarget().getName();

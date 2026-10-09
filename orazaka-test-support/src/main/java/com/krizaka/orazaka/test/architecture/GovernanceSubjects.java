@@ -1,4 +1,4 @@
-package com.orazaka.test.architecture;
+package com.krizaka.orazaka.test.architecture;
 
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -81,10 +81,11 @@ public final class GovernanceSubjects {
    * an ArchUnit rule's {@code check}/{@code evaluate}, whose {@code failOnEmptyShould} refuses an
    * empty selection, or {@link #require}. And nothing may call {@code allowEmptyShould}, which is
    * how that ArchUnit guard was switched off on thirteen rules before this existed. Its population
-   * is the rule entry points of {@code com.orazaka.test.architecture}.
+   * is the rule entry points of {@code com.krizaka.orazaka.test.architecture}.
    */
   public static void assertEveryRuleIsNonVacuous() {
-    JavaClasses rules = new ClassFileImporter().importPackages(RULES_PACKAGE);
+    JavaClasses rules =
+        new ClassFileImporter().importPackages(RULES_PACKAGE, KRIZAKA_RULES_PACKAGE);
     List<JavaMethod> entryPoints =
         require(
             "GOV-006",
@@ -128,7 +129,10 @@ public final class GovernanceSubjects {
     }
   }
 
-  private static final String RULES_PACKAGE = "com.orazaka.test.architecture";
+  private static final String RULES_PACKAGE = "com.krizaka.orazaka.test.architecture";
+
+  /** The generic rules Orazaka delegates to (krizaka-test-support) are held to the same bar. */
+  private static final String KRIZAKA_RULES_PACKAGE = "com.krizaka.test.architecture";
 
   private static boolean reachesAGuard(JavaCodeUnit unit, Set<String> visited) {
     if (!visited.add(unit.getFullName())) {
@@ -141,10 +145,13 @@ public final class GovernanceSubjects {
           && (name.equals("check") || name.equals("evaluate"))) {
         return true;
       }
-      if (owner.isEquivalentTo(GovernanceSubjects.class) && name.equals("require")) {
+      if ((owner.isEquivalentTo(GovernanceSubjects.class)
+              || owner.getName().equals(KRIZAKA_RULES_PACKAGE + ".Subjects"))
+          && name.equals("require")) {
         return true;
       }
-      if (owner.getPackageName().equals(RULES_PACKAGE)) {
+      if (owner.getPackageName().equals(RULES_PACKAGE)
+          || owner.getPackageName().equals(KRIZAKA_RULES_PACKAGE)) {
         java.util.Optional<JavaMethod> target = call.getTarget().resolveMember();
         if (target.isPresent() && reachesAGuard(target.get(), visited)) {
           return true;
