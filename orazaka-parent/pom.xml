@@ -51,9 +51,9 @@
              against the BOM if resolution fails. No -SNAPSHOT (GA only). -->
         <!-- spring-boot.version comes from krizaka-parent, so Orazaka and the Krizaka artifacts
              it consumes are always built against the same Boot line. -->
-        <spring-ai.version>2.0.0</spring-ai.version>
+        <spring-ai.version>2.0.1</spring-ai.version>
         <graphql-spring-boot.version>15.0.0</graphql-spring-boot.version>
-        <archunit.version>1.3.0</archunit.version>
+        <archunit.version>1.5.1</archunit.version>
         <frontend-maven-plugin.version>1.15.1</frontend-maven-plugin.version>
         <node.version>v24.11.1</node.version>
 
@@ -243,7 +243,7 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>properties-maven-plugin</artifactId>
-                <version>1.2.1</version>
+                <version>1.3.1</version>
                 <executions>
                     <execution>
                         <phase>initialize</phase>
