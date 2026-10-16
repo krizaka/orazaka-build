@@ -175,9 +175,9 @@ public final class Workspace {
               if (!dir.equals(root) && PRUNED.contains(name)) {
                 return FileVisitResult.SKIP_SUBTREE;
               }
-              if (name.equals("initdb")
+              if ("initdb".equals(name)
                   && dir.getParent() != null
-                  && dir.getParent().getFileName().toString().equals("infra")) {
+                  && "infra".equals(dir.getParent().getFileName().toString())) {
                 Path normalized = dir.toAbsolutePath().normalize();
                 if (!dirs.contains(normalized)) {
                   dirs.add(normalized);
