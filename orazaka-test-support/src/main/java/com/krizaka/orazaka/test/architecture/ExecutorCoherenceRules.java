@@ -210,7 +210,7 @@ public final class ExecutorCoherenceRules {
     try (Stream<Path> paths = Files.walk(root.resolve("orazaka-apps").resolve("services"))) {
       for (Path file :
           paths
-              .filter(p -> p.getFileName().toString().equals("worker.yaml"))
+              .filter(p -> "worker.yaml".equals(p.getFileName().toString()))
               .filter(p -> !p.toString().contains("/target/"))
               .toList()) {
         Matcher binding =
@@ -243,7 +243,7 @@ public final class ExecutorCoherenceRules {
     try (Stream<Path> paths = Files.walk(root)) {
       for (Path file :
           paths
-              .filter(p -> p.getFileName().toString().equals("worker.yaml"))
+              .filter(p -> "worker.yaml".equals(p.getFileName().toString()))
               .filter(p -> !p.toString().contains("/target/"))
               .toList()) {
         String yaml = read(file);

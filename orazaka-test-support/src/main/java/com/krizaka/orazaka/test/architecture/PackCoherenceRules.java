@@ -355,7 +355,7 @@ public final class PackCoherenceRules {
   /** A quoted literal becomes its text (doubled quotes unescaped); {@code NULL} becomes null. */
   private static String unquote(String value) {
     String trimmed = value.trim();
-    if (trimmed.equalsIgnoreCase("NULL")) {
+    if ("NULL".equalsIgnoreCase(trimmed)) {
       return null;
     }
     if (trimmed.length() >= 2 && trimmed.startsWith("'") && trimmed.endsWith("'")) {

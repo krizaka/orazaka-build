@@ -687,18 +687,18 @@ public final class GovernanceRules {
         "CAP-002",
         "CapabilityDeclaration.java (the endpoint rule's one author)",
         PackPurityRules.productionSources(repositoryRoot).stream()
-            .filter(file -> file.getFileName().toString().equals("CapabilityDeclaration.java"))
+            .filter(file -> "CapabilityDeclaration.java".equals(file.getFileName().toString()))
             .toList());
     for (Path file : PackPurityRules.productionSources(repositoryRoot)) {
       String name = file.getFileName().toString();
-      if (name.equals("CapabilityDeclaration.java") || name.endsWith("Test.java")) {
+      if ("CapabilityDeclaration.java".equals(name) || name.endsWith("Test.java")) {
         continue;
       }
       String source = readSource(file);
       if (!source.contains("httpMethod")) {
         continue;
       }
-      if (name.equals("GovernanceRules.java") || name.equals("PackPurityRules.java")) {
+      if ("GovernanceRules.java".equals(name) || "PackPurityRules.java".equals(name)) {
         // The rules' own text names the thing they forbid; that is what a rule is.
         continue;
       }
@@ -772,7 +772,7 @@ public final class GovernanceRules {
             "KIT-001",
             "SecurityConfig.java files",
             PackPurityRules.productionSources(repositoryRoot).stream()
-                .filter(file -> file.getFileName().toString().equals("SecurityConfig.java"))
+                .filter(file -> "SecurityConfig.java".equals(file.getFileName().toString()))
                 .toList());
     for (Path file : securityConfigs) {
       String source = withoutComments(readSource(file));
@@ -860,7 +860,7 @@ public final class GovernanceRules {
       }
     }
     for (Path file : sources) {
-      if (file.getFileName().toString().equals("OutboxRelay.java") && !isTheKit(file)) {
+      if ("OutboxRelay.java".equals(file.getFileName().toString()) && !isTheKit(file)) {
         offenders.add(
             serviceOf(file) + " writes its own OutboxRelay; the relay is krizaka-messaging's");
       }
@@ -894,7 +894,7 @@ public final class GovernanceRules {
     List<String> offenders = new ArrayList<>();
     for (Path file : sources) {
       String name = file.getFileName().toString();
-      if ((name.equals("SessionJwtProperties.java") || name.equals("ServiceTokenProvider.java"))
+      if (("SessionJwtProperties.java".equals(name) || "ServiceTokenProvider.java".equals(name))
           && !isTheKit(file)) {
         offenders.add(serviceOf(file) + " keeps its own " + name);
       }
@@ -959,8 +959,8 @@ public final class GovernanceRules {
                 .toList());
     for (Path file : studioSources) {
       String name = file.getFileName().toString();
-      if (name.equals("RunSettlementService.java")
-          || name.equals("CreditReservationService.java")
+      if ("RunSettlementService.java".equals(name)
+          || "CreditReservationService.java".equals(name)
           || name.endsWith("Test.java")) {
         continue;
       }
@@ -1008,7 +1008,7 @@ public final class GovernanceRules {
         "SAGA-002",
         "StepDeclarationService.java (the declaration reader's one author)",
         PackPurityRules.productionSources(repositoryRoot).stream()
-            .filter(file -> file.getFileName().toString().equals("StepDeclarationService.java"))
+            .filter(file -> "StepDeclarationService.java".equals(file.getFileName().toString()))
             .toList());
     for (Path file : PackPurityRules.productionSources(repositoryRoot)) {
       String name = file.getFileName().toString();
@@ -1016,11 +1016,11 @@ public final class GovernanceRules {
       // install here, in this region — and that is not a dispatch carrying a declaration. A rule
       // that conflated the two would force the installer to go through a dispatch-shaped service
       // to ask something dispatch has no opinion about (ADR-059 §3).
-      if (name.equals("StepDeclarationService.java")
+      if ("StepDeclarationService.java".equals(name)
           || name.startsWith("JdbcPackInstall")
-          || name.equals("StudioInstallationService.java")
-          || name.equals("PackInstallerService.java")
-          || name.equals("GovernanceRules.java")
+          || "StudioInstallationService.java".equals(name)
+          || "PackInstallerService.java".equals(name)
+          || "GovernanceRules.java".equals(name)
           || name.endsWith("Test.java")) {
         continue;
       }
@@ -1077,7 +1077,7 @@ public final class GovernanceRules {
     List<String> offenders = new ArrayList<>();
     List<String> located = new ArrayList<>();
     for (Path file : PackPurityRules.productionSources(repositoryRoot)) {
-      if (!file.getFileName().toString().equals("RunSagaService.java")) {
+      if (!"RunSagaService.java".equals(file.getFileName().toString())) {
         continue;
       }
       String source = withoutComments(readSource(file));

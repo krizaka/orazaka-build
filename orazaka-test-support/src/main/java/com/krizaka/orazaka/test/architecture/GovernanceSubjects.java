@@ -111,7 +111,7 @@ public final class GovernanceSubjects {
     for (JavaClass type : rules) {
       for (JavaCodeUnit unit : type.getCodeUnits()) {
         for (JavaMethodCall call : unit.getMethodCallsFromSelf()) {
-          if (call.getName().equals("allowEmptyShould")) {
+          if ("allowEmptyShould".equals(call.getName())) {
             violations.add(
                 type.getSimpleName()
                     + "."
@@ -142,16 +142,16 @@ public final class GovernanceSubjects {
       JavaClass owner = call.getTargetOwner();
       String name = call.getName();
       if (owner.isAssignableTo(ArchRule.class)
-          && (name.equals("check") || name.equals("evaluate"))) {
+          && ("check".equals(name) || "evaluate".equals(name))) {
         return true;
       }
       if ((owner.isEquivalentTo(GovernanceSubjects.class)
               || owner.getName().equals(KRIZAKA_RULES_PACKAGE + ".Subjects"))
-          && name.equals("require")) {
+          && "require".equals(name)) {
         return true;
       }
-      if (owner.getPackageName().equals(RULES_PACKAGE)
-          || owner.getPackageName().equals(KRIZAKA_RULES_PACKAGE)) {
+      if (RULES_PACKAGE.equals(owner.getPackageName())
+          || KRIZAKA_RULES_PACKAGE.equals(owner.getPackageName())) {
         java.util.Optional<JavaMethod> target = call.getTarget().resolveMember();
         if (target.isPresent() && reachesAGuard(target.get(), visited)) {
           return true;

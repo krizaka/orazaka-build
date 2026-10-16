@@ -387,7 +387,7 @@ public final class RunSurfaceRules {
   /** Whether this reached sink is one of the declared exemptions, for this exact caller. */
   private static boolean isExempt(JavaMethod handler, List<String> path) {
     String caller = key(handler);
-    String reached = path.get(path.size() - 1);
+    String reached = path.getLast();
     return EXEMPTIONS.stream()
         .anyMatch(
             exemption ->
@@ -398,7 +398,7 @@ public final class RunSurfaceRules {
     List<String> path = new ArrayList<>();
     String current = end;
     while (current != null) {
-      path.add(0, current);
+      path.addFirst(current);
       current = start.equals(current) ? null : cameFrom.get(current);
     }
     return path;
