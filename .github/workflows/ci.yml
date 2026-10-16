@@ -26,4 +26,5 @@ jobs:
     uses: krizaka/orazaka/.github/workflows/component.yml@main
     with:
       component: orazaka-build
+      rewrite: true
     secrets: inherit
