@@ -110,11 +110,7 @@ public final class MeteringMarkerRules {
           "Dispatches job.agent.dispatch.{userId} to a user's own CLI agent, which runs no"
               + " inference in this platform and therefore reaches no interceptor pipeline:"
               + " there is no hold to suppress. The work is metered, if at all, wherever that"
-              + " agent runs — outside this deployment.",
-          "JobCancelListener",
-          "Only listens: it binds job.cancel.* on the jobs exchange to stop a running job and"
-              + " publishes nothing. Naming the exchange and the job. key is what the scan sees; no"
-              + " work is produced, so there is nothing to meter or to hold.");
+              + " agent runs — outside this deployment.");
 
   private MeteringMarkerRules() {}
 
