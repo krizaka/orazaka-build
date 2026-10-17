@@ -75,6 +75,9 @@ public final class MeteringMarkerRules {
   private static final Pattern JOBS_DESTINATION =
       Pattern.compile("JOBS_EXCHANGE|\"orazaka\\.jobs\"");
 
+  /** A consumer's {@code @Exchange(...)} binding: no nested parentheses in its attributes. */
+  private static final Pattern LISTENER_BINDING = Pattern.compile("@Exchange\\s*\\([^)]*\\)");
+
   /**
    * Where a class that names the exchange is declaring topology rather than sending to it.
    *
@@ -196,7 +199,7 @@ public final class MeteringMarkerRules {
                   return;
                 }
                 String name = path.getFileName().toString().replace(".java", "");
-                if (JOBS_DESTINATION.matcher(readFile(path)).find()) {
+                if (sendsToJobsExchange(readFile(path))) {
                   producers.put(name, path);
                 }
               });
@@ -204,6 +207,20 @@ public final class MeteringMarkerRules {
       throw new UncheckedIOException("cannot scan " + repositoryRoot, e);
     }
     return producers;
+  }
+
+  /**
+   * Whether a source names the jobs exchange as a destination.
+   *
+   * <p>An {@code @Exchange(...)} annotation is a listener's binding: it declares where the class
+   * <i>receives</i>, so it is removed before looking. A consumer such as {@code JobCancelListener}
+   * publishes nothing and has no work to meter.
+   *
+   * @param source the Java source of one class
+   * @return true when the class sends to the jobs exchange
+   */
+  static boolean sendsToJobsExchange(String source) {
+    return JOBS_DESTINATION.matcher(LISTENER_BINDING.matcher(source).replaceAll("")).find();
   }
 
   private static String readFile(Path path) {
