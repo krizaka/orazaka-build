@@ -60,9 +60,12 @@ class SagaReaderRulesTest {
     Set<String> readers = with(Set.of("stepSnapshot"));
     readers.remove("loadRun");
     String writing =
-        "  private Object loadRun(String a) {\n"
-            + "    jdbc.update(\"UPDATE studio_run SET status = 'X' WHERE id = ?\");\n"
-            + "    return null;\n  }\n";
+        """
+          private Object loadRun(String a) {
+            jdbc.update("UPDATE studio_run SET status = 'X' WHERE id = ?");
+            return null;
+          }
+        """;
     assertThat(offenders(saga(readers, writing))).anyMatch(o -> o.startsWith("loadRun writes"));
   }
 
@@ -71,8 +74,11 @@ class SagaReaderRulesTest {
   void everyOverloadIsRead() {
     Set<String> readers = with(Set.of("stepSnapshot"));
     String overload =
-        "  private void advance(Object run, Object blueprint) {\n"
-            + "    jdbc.update(\"DELETE FROM studio_run_step WHERE run_id = ?\");\n  }\n";
+        """
+          private void advance(Object run, Object blueprint) {
+            jdbc.update("DELETE FROM studio_run_step WHERE run_id = ?");
+          }
+        """;
     assertThat(offenders(saga(readers, overload))).anyMatch(o -> o.startsWith("advance writes"));
   }
 }
