@@ -1095,14 +1095,12 @@ public final class GovernanceRules {
    * is checked.
    *
    * <p>The three per-question queries ({@code stepStates}, {@code stepCauses}, {@code
-   * stepFailureMessage}) became one {@code stepSnapshot} in orazaka-studio#73. The rule is shared
-   * by a component built against it at {@code main}, so it accepts either generation for the one
-   * pull request that moves the studio from one to the other — never a mix of them, and never
-   * neither: a generation half renamed is still a violation by name. The old generation is removed
-   * from this list once the studio's {@code main} carries the snapshot.
+   * stepFailureMessage}) became one {@code stepSnapshot} in orazaka-studio#73, and the studio's
+   * {@code main} carries it. The list stays a list of generations so the next such move can land
+   * the same way: the new generation added beside the old for the one pull request that moves the
+   * studio, never a mix of them and never neither, then the old one removed.
    */
-  static final List<Set<String>> SAGA_STEP_READER_GENERATIONS =
-      List.of(Set.of("stepStates", "stepCauses", "stepFailureMessage"), Set.of("stepSnapshot"));
+  static final List<Set<String>> SAGA_STEP_READER_GENERATIONS = List.of(Set.of("stepSnapshot"));
 
   /**
    * The verdict on one {@code RunSagaService} source, comments already removed.
