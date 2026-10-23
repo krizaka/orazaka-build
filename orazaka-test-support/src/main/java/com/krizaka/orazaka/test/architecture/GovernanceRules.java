@@ -1056,54 +1056,13 @@ public final class GovernanceRules {
    */
   public static void assertSagaReadersDoNotWrite(Path repositoryRoot) {
     Workspace.require(repositoryRoot, "SAGA-003");
-    Set<String> readOnly =
-        Set.of(
-            "advance",
-            "dependenciesSatisfied",
-            "allTerminal",
-            "isTerminal",
-            "loadRun",
-            "buildScope",
-            "effectiveConfig",
-            "installationConfig",
-            "expand",
-            "itemFor",
-            "worst",
-            "stepStates",
-            "stepCauses",
-            "stepFailureMessage",
-            "locateStep",
-            "runEvent");
     List<String> offenders = new ArrayList<>();
     List<String> located = new ArrayList<>();
     for (Path file : PackPurityRules.productionSources(repositoryRoot)) {
       if (!"RunSagaService.java".equals(file.getFileName().toString())) {
         continue;
       }
-      String source = withoutComments(readSource(file));
-      for (String method : readOnly) {
-        String body = methodBody(source, method);
-        if (body.isEmpty()) {
-          // Skipped before GOV-006, which is how a renamed reader would have left this rule
-          // guarding
-          // fifteen methods, then fourteen, then none, all green. Now it is a violation by name.
-          offenders.add(
-              method + " is listed as a pure reader and no longer exists under that name");
-          continue;
-        }
-        located.add(method);
-        if (body.contains("UPDATE ")
-            || body.contains("INSERT INTO ")
-            || body.contains("DELETE FROM ")
-            || body.contains("settlementService.")
-            || body.contains("outboxService.append")
-            || body.contains("runAuditService.record")) {
-          offenders.add(
-              method
-                  + " writes; it is one of the saga's pure readers and its purity is why the"
-                  + " concentration is safe there");
-        }
-      }
+      sagaReaderVerdict(withoutComments(readSource(file)), located, offenders);
     }
     GovernanceSubjects.require(
         "SAGA-003", "pure reader methods located in RunSagaService", located);
@@ -1114,8 +1073,78 @@ public final class GovernanceRules {
             + String.join("\n  ", offenders));
   }
 
+  /** The saga's pure readers that every version of {@code RunSagaService} has. */
+  static final Set<String> SAGA_READERS =
+      Set.of(
+          "advance",
+          "dependenciesSatisfied",
+          "allTerminal",
+          "isTerminal",
+          "loadRun",
+          "buildScope",
+          "effectiveConfig",
+          "installationConfig",
+          "expand",
+          "itemFor",
+          "worst",
+          "locateStep",
+          "runEvent");
+
   /**
-   * One method's body, by brace matching from its signature.
+   * How the saga reads its steps' rows: exactly one generation is present, and every reader of it
+   * is checked.
+   *
+   * <p>The three per-question queries ({@code stepStates}, {@code stepCauses}, {@code
+   * stepFailureMessage}) became one {@code stepSnapshot} in orazaka-studio#73. The rule is shared
+   * by a component built against it at {@code main}, so it accepts either generation for the one
+   * pull request that moves the studio from one to the other — never a mix of them, and never
+   * neither: a generation half renamed is still a violation by name. The old generation is removed
+   * from this list once the studio's {@code main} carries the snapshot.
+   */
+  static final List<Set<String>> SAGA_STEP_READER_GENERATIONS =
+      List.of(Set.of("stepStates", "stepCauses", "stepFailureMessage"), Set.of("stepSnapshot"));
+
+  /**
+   * The verdict on one {@code RunSagaService} source, comments already removed.
+   *
+   * @param source the class's source without comments
+   * @param located the readers found, appended to
+   * @param offenders the violations, appended to
+   */
+  static void sagaReaderVerdict(String source, List<String> located, List<String> offenders) {
+    List<String> readers = new ArrayList<>(SAGA_READERS);
+    Set<String> generation =
+        SAGA_STEP_READER_GENERATIONS.stream()
+            .filter(names -> names.stream().allMatch(name -> !methodBody(source, name).isEmpty()))
+            .findFirst()
+            .orElse(SAGA_STEP_READER_GENERATIONS.getLast());
+    readers.addAll(generation);
+    for (String method : readers.stream().sorted().toList()) {
+      String body = methodBody(source, method);
+      if (body.isEmpty()) {
+        // Skipped before GOV-006, which is how a renamed reader would have left this rule
+        // guarding fifteen methods, then fourteen, then none, all green. Now it is a violation by
+        // name.
+        offenders.add(method + " is listed as a pure reader and no longer exists under that name");
+        continue;
+      }
+      located.add(method);
+      if (body.contains("UPDATE ")
+          || body.contains("INSERT INTO ")
+          || body.contains("DELETE FROM ")
+          || body.contains("settlementService.")
+          || body.contains("outboxService.append")
+          || body.contains("runAuditService.record")) {
+        offenders.add(
+            method
+                + " writes; it is one of the saga's pure readers and its purity is why the"
+                + " concentration is safe there");
+      }
+    }
+  }
+
+  /**
+   * One method's body — every overload's, joined — by brace matching from its signature.
    *
    * <p>Brace matching rather than "until the next method", because a rule that reads the wrong span
    * either misses a violation or invents one, and both have happened in this file.
@@ -1131,21 +1160,24 @@ public final class GovernanceRules {
                     + method
                     + "\\([^)]*\\)[^;{]*\\{")
             .matcher(source);
-    if (!signature.find()) {
-      return "";
-    }
-    int depth = 0;
-    for (int at = signature.end() - 1; at < source.length(); at++) {
-      char c = source.charAt(at);
-      if (c == '{') {
-        depth++;
-      } else if (c == '}') {
-        depth--;
-        if (depth == 0) {
-          return source.substring(signature.end(), at);
+    // Every overload, not the first: `advance(UUID)` delegating to `advance(RunRow, …)` would
+    // otherwise leave the overload doing the work unread.
+    StringBuilder bodies = new StringBuilder();
+    while (signature.find()) {
+      int depth = 0;
+      for (int at = signature.end() - 1; at < source.length(); at++) {
+        char c = source.charAt(at);
+        if (c == '{') {
+          depth++;
+        } else if (c == '}') {
+          depth--;
+          if (depth == 0) {
+            bodies.append(source, signature.end(), at).append('\n');
+            break;
+          }
         }
       }
     }
-    return "";
+    return bodies.toString();
   }
 }
