@@ -85,6 +85,9 @@ public final class PackPurityRules {
           // (ADR-055)
           "identity", // orazaka.identity.jwt — the trust root's wiring
           "jobs", // orazaka.jobs.* — the jobs exchange and its queues
+          // The law watcher (ADR-089): the engine owns the corpus and declares its law.* settings;
+          // a rule instrument is data in the watcher's targets, the namespace is the engine's.
+          "law", // orazaka.law.watcher.* — the law watcher's settings (ADR-089)
           "messaging", // orazaka.messaging.broker
           "metering", // orazaka.metering.deferred — the BILL-001 marker
           // Added by the change that split the notification context out of automation: its own
