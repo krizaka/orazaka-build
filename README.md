@@ -17,6 +17,7 @@ Parent POM (Spring Boot / Spring AI BOMs, plugin management, Orazaka BOM) and th
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 [![Orazaka](https://img.shields.io/badge/part%20of-Orazaka-f67e23)](https://github.com/krizaka/orazaka#repositories)
 [![Docs](https://img.shields.io/badge/docs-krizaka.com-f67e23)](https://www.krizaka.com/en/products/orazaka)
+[![Quality Gate](https://sonarcloud.io/api/project_badges/measure?project=krizaka_orazaka-build&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=krizaka_orazaka-build) [![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=krizaka_orazaka-build&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=krizaka_orazaka-build) [![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=krizaka_orazaka-build&metric=reliability_rating)](https://sonarcloud.io/summary/new_code?id=krizaka_orazaka-build) [![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=krizaka_orazaka-build&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=krizaka_orazaka-build) [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=krizaka_orazaka-build&metric=coverage)](https://sonarcloud.io/summary/new_code?id=krizaka_orazaka-build)
 
 [Documentation](https://www.krizaka.com/en/products/orazaka) · [Website](https://www.krizaka.com) · [Krizaka on GitHub](https://github.com/krizaka)
 
