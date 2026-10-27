@@ -22,6 +22,7 @@ The org code rules (addendum 2026-10-15) are checked by tools, not by review.
   anything would; `./mvnw rewrite:run` applies it — behaviour
   identical, run the tests, land it in a small pull request. A recipe that is wrong for this repository is excluded here
   (`<exclusions>` / a `rewrite.yml`), with the reason; test fixtures (`**/fixture/**`) are excluded everywhere.
+  The import layout is explicit, never autodetected (no star import, static imports first): `orazaka-parent` activates `OrazakaJavaStyle` from `orazaka-rewrite-style`, a copy of krizaka-build's `krizaka-rewrite-style` kept until that one is on Central.
 - **ArchUnit** (shared rules in `krizaka-test-support`: `CodeRules`, `ConfigBindingRules`, `SourceRules`,
   `ArchitectureRules`): the governance tests of a module call them. `ArchitectureRules` holds the structure — layers
   (web → service → repository, none skipped, none calling up), no package cycle, `*Controller` / `*Service` /
