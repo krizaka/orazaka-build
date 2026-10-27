@@ -36,6 +36,7 @@
     </issueManagement>
 
     <properties>
+        <orazaka-rewrite-style.version>1.0.0-SNAPSHOT</orazaka-rewrite-style.version>
         <!-- krizaka-parent 0.2.0 (Maven Central) manages Spring Boot 4.0.7, whose netty, postgresql and webmvc are vulnerable;
              4.0.8 patches them (as krizaka-build main does). Drop when krizaka-parent 0.2.1 is released. -->
         <spring-boot.version>4.0.8</spring-boot.version>
@@ -292,6 +293,28 @@
             </plugins>
         </pluginManagement>
         <plugins>
+            <!-- OpenRewrite autodetected the import layout from the files it read: one `import java.util.*;` once folded
+                 the imports of 29 untouched files and failed rewrite:dryRun (orazaka-ai-engine#133, #143). The layout is
+                 explicit (no star import, static imports first), as krizaka-parent does from krizaka-build#101. It is
+                 declared here too because krizaka-rewrite-style is not on Central yet, so a build resolving krizaka-parent
+                 0.2.0 from Central does not have it: orazaka-rewrite-style carries the same layout. Drop both once
+                 krizaka-parent releases it. -->
+            <plugin>
+                <groupId>org.openrewrite.maven</groupId>
+                <artifactId>rewrite-maven-plugin</artifactId>
+                <configuration>
+                    <activeStyles>
+                        <style>com.krizaka.orazaka.rewrite.OrazakaJavaStyle</style>
+                    </activeStyles>
+                </configuration>
+                <dependencies>
+                    <dependency>
+                        <groupId>com.krizaka.orazaka</groupId>
+                        <artifactId>orazaka-rewrite-style</artifactId>
+                        <version>${orazaka-rewrite-style.version}</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>properties-maven-plugin</artifactId>
