@@ -37,7 +37,7 @@ public final class GovernanceRules {
   private static final DescribedPredicate<JavaAnnotation<?>> SPRING_BOOT_APPLICATION =
       DescribedPredicate.describe(
           "@SpringBootApplication",
-          annotation -> annotation.getRawType().getSimpleName().equals("SpringBootApplication"));
+          annotation -> "SpringBootApplication".equals(annotation.getRawType().getSimpleName()));
 
   private GovernanceRules() {}
 
