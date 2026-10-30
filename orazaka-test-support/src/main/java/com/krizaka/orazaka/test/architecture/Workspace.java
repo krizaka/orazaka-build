@@ -195,9 +195,13 @@ public final class Workspace {
   private static Path repositoryRoot(Path startDir) {
     Path current = startDir.toAbsolutePath();
     Path outermost = current;
+    Path home = Path.of(System.getProperty("user.home", "/")).toAbsolutePath().normalize();
     while (current != null) {
-      if (Files.isDirectory(current.resolve(".git"))) {
-        return current;
+      // A git worktree or submodule holds a .git FILE, not a directory: both end the climb.
+      // A test never reads the user home (a package.json there made a worktree's root the home,
+      // and a rule walked ~/Pictures), so the climb stops below it too.
+      if (Files.exists(current.resolve(".git")) || current.normalize().equals(home)) {
+        return current.normalize().equals(home) ? outermost : current;
       }
       if (Files.isRegularFile(current.resolve("pom.xml"))
           || Files.isRegularFile(current.resolve("package.json"))) {
