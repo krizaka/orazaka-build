@@ -36,16 +36,17 @@
     </issueManagement>
 
     <properties>
+        <orazaka-rewrite-style.version>1.0.0-SNAPSHOT</orazaka-rewrite-style.version>
         <!-- krizaka-parent 0.2.0 (Maven Central) manages Spring Boot 4.0.7, whose netty, postgresql and webmvc are vulnerable;
              4.0.8 patches them (as krizaka-build main does). Drop when krizaka-parent 0.2.1 is released. -->
-        <spring-boot.version>4.0.8</spring-boot.version>
+        <spring-boot.version>4.1.2</spring-boot.version>
         <!-- Security overrides of the Spring Boot BOM (Dependabot alerts): the patched releases of the libraries whose
              Boot-managed version is vulnerable. Drop each one when krizaka-parent / Spring Boot manages a fixed version. -->
-        <krizaka.security.jackson3.version>3.1.7</krizaka.security.jackson3.version>
-        <krizaka.security.jackson2.version>2.21.7</krizaka.security.jackson2.version>
+        <krizaka.security.jackson3.version>3.2.4</krizaka.security.jackson3.version>
+        <krizaka.security.jackson2.version>2.22.4</krizaka.security.jackson2.version>
         <krizaka.security.amqp-client.version>5.37.0</krizaka.security.amqp-client.version>
-        <krizaka.security.opentelemetry.version>1.62.0</krizaka.security.opentelemetry.version>
-        <krizaka.security.tomcat.version>11.0.25</krizaka.security.tomcat.version>
+        <krizaka.security.opentelemetry.version>1.67.0</krizaka.security.opentelemetry.version>
+        <krizaka.security.tomcat.version>11.0.27</krizaka.security.tomcat.version>
         <!-- The Krizaka artifacts (build, platform kit, users, notifications, billing) Orazaka
              is built on — one version, imported through krizaka-bom below. -->
         <krizaka.version>0.2.0</krizaka.version>
@@ -61,7 +62,7 @@
              against the BOM if resolution fails. No -SNAPSHOT (GA only). -->
         <!-- spring-boot.version comes from krizaka-parent, so Orazaka and the Krizaka artifacts
              it consumes are always built against the same Boot line. -->
-        <spring-ai.version>2.0.1</spring-ai.version>
+        <spring-ai.version>2.0.2</spring-ai.version>
         <graphql-spring-boot.version>15.0.0</graphql-spring-boot.version>
         <archunit.version>1.5.1</archunit.version>
         <frontend-maven-plugin.version>1.15.1</frontend-maven-plugin.version>
@@ -292,6 +293,28 @@
             </plugins>
         </pluginManagement>
         <plugins>
+            <!-- OpenRewrite autodetected the import layout from the files it read: one `import java.util.*;` once folded
+                 the imports of 29 untouched files and failed rewrite:dryRun (orazaka-ai-engine#133, #143). The layout is
+                 explicit (no star import, static imports first), as krizaka-parent does from krizaka-build#101. It is
+                 declared here too because krizaka-rewrite-style is not on Central yet, so a build resolving krizaka-parent
+                 0.2.0 from Central does not have it: orazaka-rewrite-style carries the same layout. Drop both once
+                 krizaka-parent releases it. -->
+            <plugin>
+                <groupId>org.openrewrite.maven</groupId>
+                <artifactId>rewrite-maven-plugin</artifactId>
+                <configuration>
+                    <activeStyles>
+                        <style>com.krizaka.orazaka.rewrite.OrazakaJavaStyle</style>
+                    </activeStyles>
+                </configuration>
+                <dependencies>
+                    <dependency>
+                        <groupId>com.krizaka.orazaka</groupId>
+                        <artifactId>orazaka-rewrite-style</artifactId>
+                        <version>${orazaka-rewrite-style.version}</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>properties-maven-plugin</artifactId>

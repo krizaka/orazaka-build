@@ -1,0 +1,17 @@
+# The Java style of every Krizaka repository. OpenRewrite otherwise AUTODETECTS the import layout from the
+# files it reads: one `import java.util.*;` was enough to make it fold the imports of 29 untouched files
+# and fail `rewrite:dryRun` (orazaka-ai-engine#133). Explicit, it never changes with the code.
+# Same layout as google-java-format (spotless): static imports, a blank line, the others, no star import.
+---
+type: specs.openrewrite.org/v1beta/style
+name: com.krizaka.orazaka.rewrite.OrazakaJavaStyle
+displayName: Orazaka Java style
+description: Import layout of the Krizaka repositories, written by google-java-format.
+styleConfigs:
+  - org.openrewrite.java.style.ImportLayoutStyle:
+      classCountToUseStarImport: 2147483647
+      nameCountToUseStarImport: 2147483647
+      layout:
+        - import static all other imports
+        - <blank line>
+        - import all other imports

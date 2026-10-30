@@ -33,6 +33,7 @@
 
     <modules>
         <module>orazaka-parent</module>
+        <module>orazaka-rewrite-style</module>
         <module>orazaka-test-support</module>
     </modules>
 </project>

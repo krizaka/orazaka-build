@@ -306,7 +306,11 @@ class SeedBootstrapIT {
             // PUBLISHED only: a DRAFT Studio is not offered to anyone, so nothing grants it and
             // nothing should.
             boolean published = "PUBLISHED".equals(String.valueOf(studio.get("status")));
-            if (key != null && published) {
+            // A Studio that declares itself `pricing: PAID` is sold, whatever its pack's price
+            // says today: the price may not be set yet (code-contributor, orazaka#450), and a
+            // plan row would give away what is meant to be bought or granted by an operator.
+            boolean sold = "PAID".equals(String.valueOf(studio.get("pricing")));
+            if (key != null && published && !sold) {
               grants.put(key.toString(), declared.get("key") + "/" + studio.get("key"));
             }
           }

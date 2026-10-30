@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.krizaka</groupId>
+        <artifactId>krizaka-parent</artifactId>
+        <version>0.2.0</version>
+        <relativePath/>
+    </parent>
+
+    <!-- Not under orazaka-parent: orazaka-parent loads this artifact as an OpenRewrite plugin dependency, a cycle. -->
+    <groupId>com.krizaka.orazaka</groupId>
+    <version>1.0.0-SNAPSHOT</version>
+
+    <artifactId>orazaka-rewrite-style</artifactId>
+    <name>orazaka-rewrite-style</name>
+    <description>The explicit OpenRewrite import layout of the Orazaka repositories (same as krizaka-rewrite-style of krizaka-build, which is not yet on Central): no star import, static imports first.</description>
+
+    <properties>
+        <sonar.skip>true</sonar.skip>
+    </properties>
+
+    <distributionManagement>
+        <repository>
+            <id>github</id>
+            <name>GitHub Packages — krizaka/orazaka-build</name>
+            <url>https://maven.pkg.github.com/krizaka/orazaka-build</url>
+        </repository>
+    </distributionManagement>
+</project>
