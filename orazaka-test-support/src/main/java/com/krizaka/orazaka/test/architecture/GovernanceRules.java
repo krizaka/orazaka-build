@@ -7,6 +7,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.krizaka.test.architecture.CodeRules;
 import com.krizaka.test.architecture.SourceRules;
+import com.tngtech.archunit.base.DescribedPredicate;
+import com.tngtech.archunit.core.domain.JavaAnnotation;
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
 import java.io.IOException;
@@ -31,6 +33,11 @@ public final class GovernanceRules {
   private static final String DOMAIN_LAYER = "Domain";
   private static final String APPLICATION_LAYER = "Application";
   private static final String APPLICATION_PKG_PATTERN = ".application..";
+
+  private static final DescribedPredicate<JavaAnnotation<?>> SPRING_BOOT_APPLICATION =
+      DescribedPredicate.describe(
+          "@SpringBootApplication",
+          annotation -> "SpringBootApplication".equals(annotation.getRawType().getSimpleName()));
 
   private GovernanceRules() {}
 
@@ -301,6 +308,30 @@ public final class GovernanceRules {
         .because(
             "infrastructure/support holds cross-cutting helpers and shared infra plumbing only —"
                 + " never a *Service/*Controller/*Adapter/config [ERR-130]")
+        .check(classes);
+  }
+
+  /**
+   * Asserts nothing sits at a module's package root: a class there belongs in {@code domain},
+   * {@code application} or {@code infrastructure} (repository layout standard, krizaka/.github
+   * {@code docs/standards/repo-layout.md}). The Spring Boot entry point is the one class that
+   * stays.
+   *
+   * @param classes the imported production classes
+   * @param modulePackage the module's base package, e.g. {@code com.krizaka.orazaka.job}
+   */
+  public static void assertNoClassAtPackageRoot(JavaClasses classes, String modulePackage) {
+    classes()
+        .that()
+        .resideInAPackage(modulePackage)
+        .and()
+        .areTopLevelClasses()
+        .should()
+        .beAnnotatedWith(SPRING_BOOT_APPLICATION)
+        .because(
+            "a class at the package root belongs in domain, application or infrastructure"
+                + " [layout standard]")
+        .allowEmptyShould(true)
         .check(classes);
   }
 
