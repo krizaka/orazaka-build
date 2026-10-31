@@ -46,7 +46,7 @@
         <krizaka.security.tomcat.version>11.0.27</krizaka.security.tomcat.version>
         <!-- The Krizaka artifacts (build, platform kit, users, notifications, billing) Orazaka
              is built on — one version, imported through krizaka-bom below. -->
-        <krizaka.version>0.3.1</krizaka.version>
+        <krizaka.version>0.3.5</krizaka.version>
 
         <!-- GitHub Packages repository this module is published to. Every Orazaka repository
              overrides it with its own name (krizaka/<repository>). -->
