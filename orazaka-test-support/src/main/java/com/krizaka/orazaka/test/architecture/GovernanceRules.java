@@ -321,6 +321,12 @@ public final class GovernanceRules {
    * @param modulePackage the module's base package, e.g. {@code com.krizaka.orazaka.job}
    */
   public static void assertNoClassAtPackageRoot(JavaClasses classes, String modulePackage) {
+    // Nothing at the package root is what the standard asks for, so there is nothing to judge;
+    // said here, not by switching ArchUnit's empty-selection guard off (GOV-006).
+    if (classes.stream()
+        .noneMatch(type -> type.isTopLevelClass() && type.getPackageName().equals(modulePackage))) {
+      return;
+    }
     classes()
         .that()
         .resideInAPackage(modulePackage)
@@ -331,7 +337,6 @@ public final class GovernanceRules {
         .because(
             "a class at the package root belongs in domain, application or infrastructure"
                 + " [layout standard]")
-        .allowEmptyShould(true)
         .check(classes);
   }
 

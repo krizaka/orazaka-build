@@ -30,4 +30,19 @@ class PackageRootRulesTest {
             () -> GovernanceRules.assertNoClassAtPackageRoot(classes, FIXTURES + ".stray"))
         .hasMessageContaining("StrayHelper");
   }
+
+  @Test
+  @DisplayName("a module with nothing at its package root passes: there is nothing to judge")
+  void emptyRootPasses() {
+    JavaClasses classes = GovernanceRules.importAllClasses(FIXTURES + ".clean");
+
+    assertThatCode(() -> GovernanceRules.assertNoClassAtPackageRoot(classes, FIXTURES + ".absent"))
+        .doesNotThrowAnyException();
+  }
+
+  @Test
+  @DisplayName("[GOV-006] the rules of this library are themselves non-vacuous")
+  void theLibraryRulesAreNonVacuous() {
+    assertThatCode(GovernanceSubjects::assertEveryRuleIsNonVacuous).doesNotThrowAnyException();
+  }
 }
