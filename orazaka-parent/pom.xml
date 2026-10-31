@@ -11,8 +11,8 @@
     <parent>
         <groupId>com.krizaka</groupId>
         <artifactId>krizaka-parent</artifactId>
-        <version>0.2.0</version>
-        <relativePath>../../../krizaka/krizaka-build/krizaka-parent/pom.xml</relativePath>
+        <version>0.3.1</version>
+        <relativePath/>
     </parent>
 
     <groupId>com.krizaka.orazaka</groupId>
@@ -37,9 +37,6 @@
 
     <properties>
         <orazaka-rewrite-style.version>1.0.0-SNAPSHOT</orazaka-rewrite-style.version>
-        <!-- krizaka-parent 0.2.0 (Maven Central) manages Spring Boot 4.0.7, whose netty, postgresql and webmvc are vulnerable;
-             4.0.8 patches them (as krizaka-build main does). Drop when krizaka-parent 0.2.1 is released. -->
-        <spring-boot.version>4.1.2</spring-boot.version>
         <!-- Security overrides of the Spring Boot BOM (Dependabot alerts): the patched releases of the libraries whose
              Boot-managed version is vulnerable. Drop each one when krizaka-parent / Spring Boot manages a fixed version. -->
         <krizaka.security.jackson3.version>3.2.4</krizaka.security.jackson3.version>
@@ -49,7 +46,7 @@
         <krizaka.security.tomcat.version>11.0.27</krizaka.security.tomcat.version>
         <!-- The Krizaka artifacts (build, platform kit, users, notifications, billing) Orazaka
              is built on — one version, imported through krizaka-bom below. -->
-        <krizaka.version>0.2.0</krizaka.version>
+        <krizaka.version>0.3.1</krizaka.version>
 
         <!-- GitHub Packages repository this module is published to. Every Orazaka repository
              overrides it with its own name (krizaka/<repository>). -->
