@@ -11,7 +11,7 @@
     <parent>
         <groupId>com.krizaka</groupId>
         <artifactId>krizaka-parent</artifactId>
-        <version>0.3.1</version>
+        <version>0.3.5</version>
         <relativePath/>
     </parent>
 
