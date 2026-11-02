@@ -232,7 +232,7 @@ class SeedBootstrapIT {
           .migrate();
     } catch (RuntimeException failed) {
       throw new AssertionError(
-          "%s does not apply on top of infra/initdb in %s:\n%s"
+          "%s does not apply on top of infra/initdb in %s:%n%s"
               .formatted(migration.baselineFile(), migration.database(), psqlFailures()),
           failed);
     }
@@ -248,7 +248,7 @@ class SeedBootstrapIT {
               "psql", "-v", "ON_ERROR_STOP=1", "-U", USER, "-d", DATABASE, "-f", target);
       if (result.getExitCode() != 0) {
         throw new AssertionError(
-            "%s does not apply on the migrated schema:\n%s"
+            "%s does not apply on the migrated schema:%n%s"
                 .formatted(file.getFileName(), result.getStderr()));
       }
     } catch (java.io.IOException e) {
