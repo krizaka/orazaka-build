@@ -15,6 +15,7 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 /**
  * Data-seam fitness function (strangler-fig Phase 0): the DB bootstrap is one file per bounded
@@ -29,9 +30,13 @@ import java.util.regex.Pattern;
 public final class SqlBoundaryRules {
 
   private static final Pattern CREATE_TABLE =
-      Pattern.compile("CREATE\\s+TABLE\\s+(?:IF\\s+NOT\\s+EXISTS\\s+)?([A-Za-z_][A-Za-z0-9_]*)");
+      Pattern.compile(
+          "CREATE\\s+TABLE\\s+(?:IF\\s+NOT\\s+EXISTS\\s+)?(?:public\\.)?([A-Za-z_][A-Za-z0-9_]*(?:\\.[A-Za-z_][A-Za-z0-9_]*)?)",
+          Pattern.CASE_INSENSITIVE);
   private static final Pattern REFERENCES =
-      Pattern.compile("REFERENCES\\s+([A-Za-z_][A-Za-z0-9_]*)");
+      Pattern.compile(
+          "REFERENCES\\s+(?:public\\.)?([A-Za-z_][A-Za-z0-9_]*(?:\\.[A-Za-z_][A-Za-z0-9_]*)?)",
+          Pattern.CASE_INSENSITIVE);
 
   private SqlBoundaryRules() {}
 
@@ -66,6 +71,63 @@ public final class SqlBoundaryRules {
     }
     if (!violations.isEmpty()) {
       fail("Cross-context foreign keys in infra/initdb:\n  " + String.join("\n  ", violations));
+    }
+  }
+
+  /**
+   * [SEAM-001] on the Flyway migrations: every {@code src/main/resources/db/migration} folder under
+   * {@code repoRoot} is one context (its {@code V} files together create its tables), and a {@code
+   * REFERENCES} may only target a table that folder creates. Three contexts share {@code orazaka_db}
+   * (conversation, job, governance): a foreign key from one to another's table fails here, as it
+   * does in {@code infra/initdb} (krizaka-internal#2255, plan § 1).
+   *
+   * <p>A repository with no such folder has nothing to check yet (Flyway lands per service).
+   *
+   * @param repoRoot the repository (or module) root to walk
+   */
+  public static void assertNoCrossContextForeignKeysInMigrations(Path repoRoot) {
+    List<String> violations = new ArrayList<>();
+    for (Path folder : migrationFolders(repoRoot)) {
+      List<Path> files = sqlFiles(folder);
+      Set<String> ownTables = new HashSet<>();
+      for (Path file : files) {
+        ownTables.addAll(extract(CREATE_TABLE, stripComments(readFile(file))));
+      }
+      for (Path file : files) {
+        for (String referenced : extract(REFERENCES, stripComments(readFile(file)))) {
+          if (!ownTables.contains(referenced)) {
+            violations.add(
+                repoRoot.relativize(file)
+                    + " references table '"
+                    + referenced
+                    + "' that its context's migrations do not create — cross-context FKs are"
+                    + " banned; use an opaque id");
+          }
+        }
+      }
+    }
+    if (!violations.isEmpty()) {
+      fail("Cross-context foreign keys in db/migration:\n  " + String.join("\n  ", violations));
+    }
+  }
+
+  private static List<Path> migrationFolders(Path repoRoot) {
+    try (Stream<Path> walk = Files.walk(repoRoot)) {
+      return walk.filter(Files::isDirectory)
+          .filter(d -> d.endsWith(Path.of("src", "main", "resources", "db", "migration")))
+          .filter(d -> !d.toString().contains("/target/") && !d.toString().contains("/node_modules/"))
+          .sorted()
+          .toList();
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
+  }
+
+  private static List<Path> sqlFiles(Path folder) {
+    try (Stream<Path> walk = Files.walk(folder)) {
+      return walk.filter(Files::isRegularFile).filter(f -> f.toString().endsWith(".sql")).sorted().toList();
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
     }
   }
 
