@@ -37,7 +37,7 @@ public final class SqlBoundaryRules {
           Pattern.CASE_INSENSITIVE);
   private static final Pattern REFERENCES =
       Pattern.compile(
-          "REFERENCES\\s+(?:public\\.)?([A-Za-z_][A-Za-z0-9_]*(?:\\.[A-Za-z_][A-Za-z0-9_]*)?)",
+          "\\bREFERENCES\\s+(?:public\\.)?([A-Za-z_][A-Za-z0-9_]*(?:\\.[A-Za-z_][A-Za-z0-9_]*)?)",
           Pattern.CASE_INSENSITIVE);
 
   /** Bootstrap file of a context → the Flyway baseline that took its schema over. */
