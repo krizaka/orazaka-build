@@ -77,9 +77,9 @@ public final class SqlBoundaryRules {
   /**
    * [SEAM-001] on the Flyway migrations: every {@code src/main/resources/db/migration} folder under
    * {@code repoRoot} is one context (its {@code V} files together create its tables), and a {@code
-   * REFERENCES} may only target a table that folder creates. Three contexts share {@code orazaka_db}
-   * (conversation, job, governance): a foreign key from one to another's table fails here, as it
-   * does in {@code infra/initdb} (krizaka-internal#2255, plan § 1).
+   * REFERENCES} may only target a table that folder creates. Three contexts share {@code
+   * orazaka_db} (conversation, job, governance): a foreign key from one to another's table fails
+   * here, as it does in {@code infra/initdb} (krizaka-internal#2255, plan § 1).
    *
    * <p>A repository with no such folder has nothing to check yet (Flyway lands per service).
    *
@@ -115,7 +115,8 @@ public final class SqlBoundaryRules {
     try (Stream<Path> walk = Files.walk(repoRoot)) {
       return walk.filter(Files::isDirectory)
           .filter(d -> d.endsWith(Path.of("src", "main", "resources", "db", "migration")))
-          .filter(d -> !d.toString().contains("/target/") && !d.toString().contains("/node_modules/"))
+          .filter(
+              d -> !d.toString().contains("/target/") && !d.toString().contains("/node_modules/"))
           .sorted()
           .toList();
     } catch (IOException e) {
@@ -125,7 +126,10 @@ public final class SqlBoundaryRules {
 
   private static List<Path> sqlFiles(Path folder) {
     try (Stream<Path> walk = Files.walk(folder)) {
-      return walk.filter(Files::isRegularFile).filter(f -> f.toString().endsWith(".sql")).sorted().toList();
+      return walk.filter(Files::isRegularFile)
+          .filter(f -> f.toString().endsWith(".sql"))
+          .sorted()
+          .toList();
     } catch (IOException e) {
       throw new UncheckedIOException(e);
     }
