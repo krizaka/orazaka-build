@@ -182,5 +182,18 @@
             <artifactId>snakeyaml</artifactId>
             <scope>test</scope>
         </dependency>
+
+        <!-- SeedBootstrapIT applies every service's Flyway baselines the way the services do at
+             startup (krizaka-internal#2255). Versions come from the Spring Boot BOM. -->
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-core</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-database-postgresql</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 </project>
