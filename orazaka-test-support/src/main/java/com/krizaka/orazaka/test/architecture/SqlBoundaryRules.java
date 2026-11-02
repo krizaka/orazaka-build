@@ -11,8 +11,8 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -173,8 +173,8 @@ public final class SqlBoundaryRules {
     // is read from the workspace, and the caller is skipped when that repository is not on disk.
     Optional<Path> bootstrap =
         Files.isRegularFile(own) ? Optional.of(own) : Workspace.findInitDbFile(initdbDir, fileName);
-    // Once a service applies its schema with Flyway (krizaka-internal#2255) the bootstrap file keeps
-    // only the role and the database: the tables and the seed are read from the baseline migration.
+    // Once a service applies its schema with Flyway (krizaka-internal#2255) the bootstrap file
+    // keeps only the role and the database: the tables and the seed are read from the baseline.
     Optional<Path> baseline =
         Optional.ofNullable(FLYWAY_BASELINES.get(fileName))
             .flatMap(name -> Workspace.findMigration(initdbDir, name));
