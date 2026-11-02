@@ -11,7 +11,9 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -37,6 +39,14 @@ public final class SqlBoundaryRules {
       Pattern.compile(
           "REFERENCES\\s+(?:public\\.)?([A-Za-z_][A-Za-z0-9_]*(?:\\.[A-Za-z_][A-Za-z0-9_]*)?)",
           Pattern.CASE_INSENSITIVE);
+
+  /** Bootstrap file of a context → the Flyway baseline that took its schema over. */
+  private static final Map<String, String> FLYWAY_BASELINES =
+      Map.of(
+          "20-conversation.sql", "V1__conversation_baseline.sql",
+          "30-jobs-config.sql", "V1__job_baseline.sql",
+          "60-governance.sql", "V1__governance_baseline.sql",
+          "80-studio.sql", "V1__studio_baseline.sql");
 
   private SqlBoundaryRules() {}
 
@@ -161,8 +171,20 @@ public final class SqlBoundaryRules {
     Path own = initdbDir.resolve(fileName);
     // A context's file lives in the repository that owns the context; from any other repository it
     // is read from the workspace, and the caller is skipped when that repository is not on disk.
-    Path file = Files.isRegularFile(own) ? own : Workspace.initDbFile(initdbDir, fileName);
-    return stripComments(readFile(file));
+    Optional<Path> bootstrap =
+        Files.isRegularFile(own) ? Optional.of(own) : Workspace.findInitDbFile(initdbDir, fileName);
+    // Once a service applies its schema with Flyway (krizaka-internal#2255) the bootstrap file keeps
+    // only the role and the database: the tables and the seed are read from the baseline migration.
+    Optional<Path> baseline =
+        Optional.ofNullable(FLYWAY_BASELINES.get(fileName))
+            .flatMap(name -> Workspace.findMigration(initdbDir, name));
+    if (bootstrap.isEmpty() && baseline.isEmpty()) {
+      return stripComments(readFile(Workspace.initDbFile(initdbDir, fileName)));
+    }
+    StringBuilder sql = new StringBuilder();
+    bootstrap.ifPresent(file -> sql.append(readFile(file)).append('\n'));
+    baseline.ifPresent(file -> sql.append(readFile(file)).append('\n'));
+    return stripComments(sql.toString());
   }
 
   private static String readFile(Path file) {

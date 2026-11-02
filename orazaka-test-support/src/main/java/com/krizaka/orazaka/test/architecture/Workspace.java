@@ -153,15 +153,87 @@ public final class Workspace {
    * @return the file
    */
   public static Path initDbFile(Path initdbDir, String fileName) {
+    return findInitDbFile(initdbDir, fileName)
+        .orElseGet(
+            () -> {
+              Assumptions.abort(
+                  fileName + " is owned by another repository: run inside the Orazaka workspace");
+              throw new IllegalStateException("unreachable");
+            });
+  }
+
+  /**
+   * Like {@link #initDbFile} but without skipping the caller: empty when no bootstrap directory
+   * holds the file.
+   *
+   * @param initdbDir the caller's own {@code infra/initdb}
+   * @param fileName e.g. {@code 30-jobs-config.sql}
+   * @return the file, if any
+   */
+  public static Optional<Path> findInitDbFile(Path initdbDir, String fileName) {
     for (Path dir : initDbDirectories(initdbDir)) {
       Path file = dir.resolve(fileName);
       if (Files.isRegularFile(file)) {
-        return file;
+        return Optional.of(file);
       }
     }
-    Assumptions.abort(
-        fileName + " is owned by another repository: run inside the Orazaka workspace");
-    throw new IllegalStateException("unreachable");
+    return Optional.empty();
+  }
+
+  /**
+   * A Flyway migration by file name, wherever the context's service keeps it: in the repository of
+   * {@code initdbDir} first, then in the rest of the workspace. A context whose schema moved from
+   * {@code infra/initdb} to {@code src/main/resources/db/...} (krizaka-internal#2255) is read from
+   * here.
+   *
+   * @param initdbDir the caller's own {@code infra/initdb}
+   * @param fileName e.g. {@code V1__job_baseline.sql}
+   * @return the file, if the repository or the workspace holds it
+   */
+  public static Optional<Path> findMigration(Path initdbDir, String fileName) {
+    Path repository = initdbDir.toAbsolutePath().normalize().getParent();
+    repository = repository == null ? null : repository.getParent();
+    List<Path> roots = new ArrayList<>();
+    if (repository != null) {
+      roots.add(repository);
+    }
+    find(initdbDir).ifPresent(roots::add);
+    for (Path root : roots) {
+      Optional<Path> found = findMigrationUnder(root, fileName);
+      if (found.isPresent()) {
+        return found;
+      }
+    }
+    return Optional.empty();
+  }
+
+  private static Optional<Path> findMigrationUnder(Path root, String fileName) {
+    List<Path> found = new ArrayList<>();
+    try {
+      Files.walkFileTree(
+          root,
+          new SimpleFileVisitor<>() {
+            @Override
+            public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
+              String name = dir.getFileName() == null ? "" : dir.getFileName().toString();
+              boolean pruned = !dir.equals(root) && PRUNED.contains(name) && !"src".equals(name);
+              return pruned ? FileVisitResult.SKIP_SUBTREE : FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
+              if (fileName.equals(file.getFileName().toString())
+                  && file.getParent().toString().contains("/db/")) {
+                found.add(file);
+                return FileVisitResult.TERMINATE;
+              }
+              return FileVisitResult.CONTINUE;
+            }
+          });
+    } catch (IOException e) {
+      throw new UncheckedIOException("Failed to walk " + root, e);
+    }
+    return found.stream().findFirst();
   }
 
   private static void collectInitDbDirectories(Path root, List<Path> dirs) {

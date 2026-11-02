@@ -1,5 +1,6 @@
 package com.krizaka.orazaka.test.architecture;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -57,6 +58,28 @@ class SqlBoundaryRulesTest {
                 SqlBoundaryRules.assertNoCrossContextForeignKeysInMigrations(
                     Files.createDirectories(root.resolve("empty"))))
         .doesNotThrowAnyException();
+  }
+
+  @Test
+  @DisplayName("a context whose schema is a Flyway baseline is read from it, the stub aside")
+  void readContextFollowsTheBaseline() throws IOException {
+    write("infra/initdb/30-jobs-config.sql", "-- role and database only\nCREATE ROLE job_owner;");
+    write(
+        "service/src/main/resources/db/migration/V1__job_baseline.sql",
+        "CREATE TABLE orazaka_capabilities (k text);\nINSERT INTO orazaka_capabilities VALUES ('a');");
+
+    String sql = SqlBoundaryRules.readContext(root.resolve("infra/initdb"), "30-jobs-config.sql");
+
+    assertThat(sql).contains("CREATE ROLE job_owner").contains("INSERT INTO orazaka_capabilities");
+  }
+
+  @Test
+  @DisplayName("a context with no baseline is read from its bootstrap file alone")
+  void readContextWithoutBaseline() throws IOException {
+    write("infra/initdb/30-jobs-config.sql", "INSERT INTO orazaka_capabilities VALUES ('b');");
+
+    assertThat(SqlBoundaryRules.readContext(root.resolve("infra/initdb"), "30-jobs-config.sql"))
+        .contains("VALUES ('b')");
   }
 
   private void write(String path, String content) throws IOException {
