@@ -31,6 +31,17 @@ class SqlBoundaryRulesTest {
   }
 
   @Test
+  @DisplayName("a column named like preferences or differences is not a REFERENCES clause")
+  void wordInsideColumnNameIsNotAReference() throws IOException {
+    write(
+        MIGRATIONS + "V1__baseline.sql",
+        "CREATE TABLE users (id uuid PRIMARY KEY, preferences TEXT, raw_preferences TEXT);");
+
+    assertThatCode(() -> SqlBoundaryRules.assertNoCrossContextForeignKeysInMigrations(root))
+        .doesNotThrowAnyException();
+  }
+
+  @Test
   @DisplayName("a foreign key to another context's table fails, lower case included")
   void crossContextFails() throws IOException {
     write(MIGRATIONS + "V1__baseline.sql", "CREATE TABLE job (id uuid PRIMARY KEY);");

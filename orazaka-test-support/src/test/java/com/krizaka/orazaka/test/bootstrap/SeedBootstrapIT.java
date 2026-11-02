@@ -15,7 +15,9 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Stream;
+import org.flywaydb.core.Flyway;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
@@ -26,7 +28,8 @@ import org.testcontainers.utility.MountableFile;
 import org.yaml.snakeyaml.Yaml;
 
 /**
- * Every file in {@code infra/initdb} loads into an empty database, in order (audit #31).
+ * The platform bootstraps from an empty database: {@code infra/initdb}, then every service's Flyway
+ * baseline (audit #31, krizaka-internal#2255).
  *
  * <p><b>Nothing ran these files.</b> They are the source of truth for capabilities, routing,
  * pricing, packs and dev fixtures, and the whole build read them only with regular expressions —
@@ -41,6 +44,19 @@ import org.yaml.snakeyaml.Yaml;
  * ON_ERROR_STOP=1}, on the same image {@code infra/docker-compose.yml} runs. Applying the files
  * through JDBC instead would prove less than it looks — three of them use {@code \c} and {@code SET
  * ROLE}, which are psql's and not the server's.
+ *
+ * <p><b>Two steps, like the real bootstrap.</b> Since krizaka-internal#2255 {@code infra/initdb}
+ * only creates what needs an administrator — databases, roles, extensions — and the tables come
+ * from each service's {@code db/migration/V1__<context>_baseline.sql}, which the service applies at
+ * startup with Flyway as its database's owner role. This suite does the same with Flyway itself
+ * (never a hand-rolled SQL runner): same history table, same baseline version, same credentials
+ * kind as each service's {@code spring.flyway} block, so a baseline that only works on a superuser,
+ * or that collides with the other contexts of the shared {@code orazaka_db}, fails here and not on
+ * the first deploy. A context whose schema has not moved to Flyway yet still brings it in its
+ * initdb file, which the first step applies.
+ *
+ * <p>The dev dataset ({@code 90-dev-fixtures.sql}, when the workspace still carries it) is not part
+ * of the platform: it is applied last, on the migrated schema, as {@code dev-reset} does.
  *
  * <p>The assertions after the bootstrap are anchors, not a second copy of the seed: what the
  * platform reads at runtime must exist after a fresh install — the per-context databases, the two
@@ -63,6 +79,8 @@ class SeedBootstrapIT {
 
   private static PostgreSQLContainer<?> postgres;
   private static List<String> seedFiles;
+  private static Optional<Path> devFixtures;
+  private static final List<String> migrated = new ArrayList<>();
 
   @BeforeAll
   static void bootstrapFromEmpty() {
@@ -73,7 +91,9 @@ class SeedBootstrapIT {
     // repository that owns it: this suite needs the whole workspace.
     Path workspace =
         Workspace.root(Path.of(System.getProperty("user.dir")), "Every context's infra/initdb");
-    List<Path> files = Workspace.initDbFiles(workspace.resolve("infra").resolve("initdb"));
+    Path initdb = workspace.resolve("infra").resolve("initdb");
+    devFixtures = findDevFixtures(Workspace.initDbFiles(initdb));
+    List<Path> files = platformFiles(Workspace.initDbFiles(initdb));
     seedFiles = files.stream().map(file -> file.getFileName().toString()).toList();
     // A guard against judging the empty set: a wrong directory would otherwise bootstrap nothing
     // and pass.
@@ -95,7 +115,173 @@ class SeedBootstrapIT {
       throw new AssertionError(
           "infra/initdb does not bootstrap an empty database:\n" + psqlFailures(), failed);
     }
+    for (Migration migration : MIGRATIONS) {
+      Optional<Path> baseline = Workspace.findMigration(initdb, migration.baselineFile());
+      if (baseline.isEmpty() && migration.optional()) {
+        continue; // this context's schema is still in its initdb file, applied by step one
+      }
+      Path directory =
+          baseline
+              .orElseThrow(
+                  () ->
+                      new AssertionError(
+                          migration.baselineFile() + " is not in the workspace: " + migration))
+              .getParent();
+      migrate(migration, directory);
+      migrated.add(migration.baselineFile());
+    }
+    devFixtures.ifPresent(SeedBootstrapIT::applyDevFixtures);
   }
+
+  /** One service's Flyway settings, as its {@code spring.flyway} block gives them. */
+  private record Migration(
+      String database,
+      String role,
+      String baselineFile,
+      String historyTable,
+      String baselineVersion,
+      boolean optional) {}
+
+  /**
+   * The services' migrations, in the order they start. The two settings that matter are the ones
+   * the services trap on: the shared {@code orazaka_db} (one history table per context, baselining
+   * at 0 so V1 always runs) and the owner role as the migrator.
+   */
+  private static final List<Migration> MIGRATIONS =
+      List.of(
+          new Migration(
+              "krizaka_users_db",
+              "krizaka_users",
+              "V1__users_baseline.sql",
+              "flyway_schema_history",
+              "1",
+              false),
+          new Migration(
+              "krizaka_billing_db",
+              "krizaka_billing",
+              "V1__billing_baseline.sql",
+              "flyway_schema_history",
+              "1",
+              false),
+          new Migration(
+              "orazaka_studio_db",
+              "orazaka_studio",
+              "V1__studio_baseline.sql",
+              "flyway_schema_history",
+              "1",
+              false),
+          new Migration(
+              "orazaka_automation_db",
+              "orazaka_automation",
+              "V1__automation_baseline.sql",
+              "flyway_schema_history",
+              "1",
+              false),
+          new Migration(
+              DATABASE,
+              USER,
+              "V1__conversation_baseline.sql",
+              "flyway_history_conversation",
+              "0",
+              false),
+          new Migration(DATABASE, USER, "V1__job_baseline.sql", "flyway_history_job", "0", false),
+          // Not moved to Flyway on every branch yet: until it is, its initdb file carries the
+          // schema.
+          new Migration(
+              DATABASE,
+              USER,
+              "V1__governance_baseline.sql",
+              "flyway_history_governance",
+              "0",
+              true),
+          new Migration(
+              "orazaka_knowledge_db",
+              "orazaka_knowledge",
+              "V1__knowledge_baseline.sql",
+              "flyway_schema_history",
+              "1",
+              true));
+
+  /**
+   * Applies one baseline directory as the service does: Flyway, as the database's owner role.
+   *
+   * <p>The roles are created without a password by initdb ({@code orazaka start} sets them from the
+   * environment once the container is healthy); the test does the same so the migrator really is
+   * the owner and not the bootstrap superuser.
+   */
+  private static void migrate(Migration migration, Path directory) {
+    String password = "migrator-" + migration.role();
+    if (!USER.equals(migration.role())) {
+      execute("ALTER ROLE " + migration.role() + " PASSWORD '" + password + "'", DATABASE);
+    }
+    try {
+      Flyway.configure()
+          .dataSource(
+              jdbcUrl(migration.database()),
+              migration.role(),
+              USER.equals(migration.role()) ? PASSWORD : password)
+          .locations("filesystem:" + directory)
+          .table(migration.historyTable())
+          .baselineOnMigrate(true)
+          .baselineVersion(migration.baselineVersion())
+          .validateOnMigrate(true)
+          .cleanDisabled(true)
+          .outOfOrder(false)
+          .placeholderReplacement(false)
+          .load()
+          .migrate();
+    } catch (RuntimeException failed) {
+      throw new AssertionError(
+          "%s does not apply on top of infra/initdb in %s:%n%s"
+              .formatted(migration.baselineFile(), migration.database(), psqlFailures()),
+          failed);
+    }
+  }
+
+  /** The dev dataset is applied on the migrated schema, last, with psql (it uses {@code \c}). */
+  private static void applyDevFixtures(Path file) {
+    String target = "/tmp/" + file.getFileName();
+    postgres.copyFileToContainer(MountableFile.forHostPath(file), target);
+    try {
+      var result =
+          postgres.execInContainer(
+              "psql", "-v", "ON_ERROR_STOP=1", "-U", USER, "-d", DATABASE, "-f", target);
+      if (result.getExitCode() != 0) {
+        throw new AssertionError(
+            "%s does not apply on the migrated schema:%n%s"
+                .formatted(file.getFileName(), result.getStderr()));
+      }
+    } catch (java.io.IOException e) {
+      throw new java.io.UncheckedIOException(e);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw new IllegalStateException(e);
+    }
+  }
+
+  /**
+   * The initdb files of the platform: by name, one each (an archived clone of a repository keeps a
+   * stale copy of a file another repository now owns, and the later path is the live one), and
+   * without the dev dataset, which is data and runs last.
+   */
+  private static List<Path> platformFiles(List<Path> all) {
+    Map<String, Path> byName = new LinkedHashMap<>();
+    all.stream()
+        .sorted(Comparator.comparing(Path::toString))
+        .forEach(file -> byName.put(file.getFileName().toString(), file));
+    return byName.values().stream()
+        .filter(file -> !DEV_FIXTURES.equals(file.getFileName().toString()))
+        .sorted(Comparator.comparing(file -> file.getFileName().toString()))
+        .toList();
+  }
+
+  private static Optional<Path> findDevFixtures(List<Path> all) {
+    return all.stream()
+        .filter(file -> DEV_FIXTURES.equals(file.getFileName().toString()))
+        .findFirst();
+  }
+
+  private static final String DEV_FIXTURES = "90-dev-fixtures.sql";
 
   @AfterAll
   static void stop() {
@@ -111,6 +297,26 @@ class SeedBootstrapIT {
     assertThat(seedFiles)
         .allSatisfy(file -> assertThat(log).as("%s was run by initdb", file).contains(file));
     assertThat(psqlFailures()).as("what psql reported while applying them").isEmpty();
+  }
+
+  @Test
+  @DisplayName("every service's Flyway baseline was applied by its own migrator")
+  void everyBaselineWasApplied() {
+    assertThat(migrated)
+        .contains(
+            "V1__users_baseline.sql",
+            "V1__billing_baseline.sql",
+            "V1__studio_baseline.sql",
+            "V1__automation_baseline.sql",
+            "V1__conversation_baseline.sql",
+            "V1__job_baseline.sql");
+    // The shared database keeps one history per context: no baseline marked another's as applied.
+    assertThat(
+            strings(
+                "SELECT table_name FROM information_schema.tables"
+                    + " WHERE table_name LIKE 'flyway_history_%' ORDER BY 1",
+                DATABASE))
+        .contains("flyway_history_conversation", "flyway_history_job");
   }
 
   @Test
@@ -336,13 +542,25 @@ class SeedBootstrapIT {
         .reduce("", (all, line) -> all.isEmpty() ? line : all + "\n" + line);
   }
 
+  private static String jdbcUrl(String database) {
+    return "jdbc:postgresql://%s:%d/%s"
+        .formatted(
+            postgres.getHost(),
+            postgres.getMappedPort(PostgreSQLContainer.POSTGRESQL_PORT),
+            database);
+  }
+
+  private static void execute(String sql, String database) {
+    try (Connection connection = DriverManager.getConnection(jdbcUrl(database), USER, PASSWORD);
+        Statement statement = connection.createStatement()) {
+      statement.execute(sql);
+    } catch (SQLException e) {
+      throw new IllegalStateException("Statement failed against " + database + ": " + sql, e);
+    }
+  }
+
   private static List<String> strings(String sql, String database) {
-    String url =
-        "jdbc:postgresql://%s:%d/%s"
-            .formatted(
-                postgres.getHost(),
-                postgres.getMappedPort(PostgreSQLContainer.POSTGRESQL_PORT),
-                database);
+    String url = jdbcUrl(database);
     List<String> values = new ArrayList<>();
     try (Connection connection = DriverManager.getConnection(url, USER, PASSWORD);
         Statement statement = connection.createStatement();
