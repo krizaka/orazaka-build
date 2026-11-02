@@ -11,6 +11,6 @@ permissions: {}
 jobs:
   guard:
     name: Merge resolution
-    uses: krizaka/.github/.github/workflows/merge-resolution.yml@8b8ba2244f8348479fe6b85f245049da036195d2 # main
+    uses: krizaka/.github/.github/workflows/merge-resolution.yml@f3358b76bfc0594de42774347f005575e8e11231 # main
     permissions:
       contents: read
