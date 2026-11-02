@@ -82,6 +82,15 @@ class SqlBoundaryRulesTest {
         .contains("VALUES ('b')");
   }
 
+  @Test
+  @DisplayName("a migrations folder with no V file fails: the scan is pointed at the wrong place")
+  void emptyFolderFails() throws IOException {
+    Files.createDirectories(root.resolve(MIGRATIONS));
+
+    assertThatThrownBy(() -> SqlBoundaryRules.assertNoCrossContextForeignKeysInMigrations(root))
+        .hasMessageContaining("examined no V*.sql files");
+  }
+
   private void write(String path, String content) throws IOException {
     Path file = root.resolve(path);
     Files.createDirectories(file.getParent());

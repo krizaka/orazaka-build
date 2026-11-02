@@ -98,7 +98,9 @@ public final class SqlBoundaryRules {
   public static void assertNoCrossContextForeignKeysInMigrations(Path repoRoot) {
     List<String> violations = new ArrayList<>();
     for (Path folder : migrationFolders(repoRoot)) {
-      List<Path> files = sqlFiles(folder);
+      // A migrations folder with no V file is a scan pointed at the wrong place (GOV-006).
+      List<Path> files =
+          GovernanceSubjects.require("SEAM-001", "V*.sql files in " + folder, sqlFiles(folder));
       Set<String> ownTables = new HashSet<>();
       for (Path file : files) {
         ownTables.addAll(extract(CREATE_TABLE, stripComments(readFile(file))));
