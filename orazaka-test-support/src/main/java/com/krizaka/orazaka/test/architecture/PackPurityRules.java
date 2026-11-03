@@ -81,6 +81,8 @@ public final class PackPurityRules {
           // review; a pack namespace has nobody to ask.
           "enrichment", // orazaka.enrichment.namespace — which prefix the pipeline enriches from
           "events", // orazaka.events.* — the events exchange and its queues
+          // The governance schema's own Flyway baseline, applied by the host (krizaka-internal#2255).
+          "governance", // orazaka.governance.migrations.enabled — the migration switch
           "guard", // orazaka.guard.subject — what the user wrote, declared by the producer
           // (ADR-055)
           "identity", // orazaka.identity.jwt — the trust root's wiring
