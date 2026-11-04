@@ -29,6 +29,20 @@ class PackPurityRulesTest {
   }
 
   @Test
+  @DisplayName("the governance schema's migration switch is an engine namespace (Flyway V1)")
+  void governanceNamespaceIsEngineOwned() throws IOException {
+    write(
+        "orazaka-libs/engine/src/main/java/GovernanceMigrations.java",
+        """
+        public final class GovernanceMigrations {
+          public static final String ENABLED_PROPERTY = "orazaka.governance.migrations.enabled";
+        }
+        """);
+
+    assertThatCode(() -> PackPurityRules.assertNoPackKeyLiterals(root)).doesNotThrowAnyException();
+  }
+
+  @Test
   @DisplayName("a pack key in engine code is still flagged")
   void packKeyStillFlagged() throws IOException {
     write(
