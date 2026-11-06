@@ -93,7 +93,7 @@ import java.util.stream.Stream;
  *       its payload were written when the automation ran, and the endpoint releases it. M3
  *       established this the hard way — the compiler refused to delete {@code
  *       JobQueuePublisherService} because this path still needed it.
- *   <li>{@code orazaka.core.chat.completion} is <b>not exempted, because it is never a subject</b>:
+ *   <li>{@code sovkora.core.chat.completion} is <b>not exempted, because it is never a subject</b>:
  *       it is synchronous and off the broker by contract (AGENTS.md §6), so it reaches no dispatch
  *       sink and this rule has nothing to say about it. It is named here so the next reader knows
  *       the omission was decided rather than overlooked — an exemption that is a list entry with no
@@ -120,8 +120,14 @@ public final class RunSurfaceRules {
   /** This rule family's own package: its sources describe dispatch, they do not perform it. */
   private static final String RULES_PACKAGE = "com.krizaka.sovkora.test.architecture.";
 
-  /** The exchange a job command travels on (AGENTS.md §6). */
-  private static final String JOBS_EXCHANGE = "orazaka.jobs";
+  /**
+   * The exchange a job command travels on (AGENTS.md §6), as a literal: {@code "<platform>.jobs"}.
+   * Learned from the sources like the constants below, not carried: the platform's name is data.
+   */
+  private static final String JOBS_EXCHANGE_LITERAL = "\"\\w+\\.jobs\"";
+
+  /** How the rule names the exchange in its messages. */
+  private static final String JOBS_EXCHANGE = "the jobs exchange";
 
   /**
    * A {@code String} constant declared equal to the jobs exchange, whatever it is called.
@@ -131,7 +137,7 @@ public final class RunSurfaceRules {
    * AmqpConstants.JOBS_EXCHANGE} are found the same way, and a fourth spelling would be too.
    */
   private static final Pattern EXCHANGE_CONSTANT =
-      Pattern.compile("String\\s+(\\w+)\\s*=\\s*\"" + Pattern.quote(JOBS_EXCHANGE) + "\"");
+      Pattern.compile("String\\s+(\\w+)\\s*=\\s*(" + JOBS_EXCHANGE_LITERAL + ")");
 
   /** Strips {@code //} and block comments: a comment that NAMES a dispatch is not one. */
   private static final Pattern COMMENTS = Pattern.compile("//[^\n]*|/\\*.*?\\*/", Pattern.DOTALL);
@@ -294,7 +300,6 @@ public final class RunSurfaceRules {
     List<Path> sources = productionSources(repositoryRoot);
 
     Set<String> exchangeNames = new LinkedHashSet<>();
-    exchangeNames.add('"' + JOBS_EXCHANGE + '"');
     Map<Path, String> bodies = new LinkedHashMap<>();
     for (Path source : sources) {
       String body = read(source);
@@ -302,6 +307,7 @@ public final class RunSurfaceRules {
       Matcher declared = EXCHANGE_CONSTANT.matcher(body);
       while (declared.find()) {
         exchangeNames.add(declared.group(1));
+        exchangeNames.add(declared.group(2));
       }
     }
 
