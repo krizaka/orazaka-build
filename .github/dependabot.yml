@@ -36,7 +36,7 @@ updates:
         applies-to: security-updates
         patterns: ["*"]
     ignore:
-      # coordinated migration; krizaka/orazaka-build#10
+      # coordinated migration; krizaka/sovkora-build#10
       - dependency-name: "org.testcontainers:*"
         versions: [">=2"]
     commit-message:

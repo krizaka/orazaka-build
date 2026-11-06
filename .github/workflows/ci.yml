@@ -1,6 +1,6 @@
-# Builds and tests orazaka-build inside the Orazaka workspace (every upstream repository is
+# Builds and tests sovkora-build inside the Sovkora workspace (every upstream repository is
 # built from source at its default branch), then publishes to GitHub Packages on a v* tag.
-# The pipeline itself lives in krizaka/orazaka so every repository is checked the same way.
+# The pipeline itself lives in krizaka/sovkora so every repository is checked the same way.
 name: CI
 
 on:

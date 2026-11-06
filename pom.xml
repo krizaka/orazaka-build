@@ -4,36 +4,36 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <!-- The relativePath resolves inside the Orazaka workspace (krizaka/orazaka); a standalone
-         clone falls back to the orazaka-parent published on GitHub Packages. -->
+    <!-- The relativePath resolves inside the Sovkora workspace (krizaka/sovkora); a standalone
+         clone falls back to the sovkora-parent published on GitHub Packages. -->
     <parent>
-        <groupId>com.krizaka.orazaka</groupId>
-        <artifactId>orazaka-parent</artifactId>
+        <groupId>com.krizaka.sovkora</groupId>
+        <artifactId>sovkora-parent</artifactId>
         <version>1.0.0-SNAPSHOT</version>
-        <relativePath>orazaka-parent/pom.xml</relativePath>
+        <relativePath>sovkora-parent/pom.xml</relativePath>
     </parent>
 
-    <artifactId>orazaka-build</artifactId>
+    <artifactId>sovkora-build</artifactId>
     <packaging>pom</packaging>
-    <name>orazaka-build</name>
-    <description>Parent POM (Spring Boot / Spring AI BOMs, plugin management, Orazaka BOM) and the shared governance test kit (ArchUnit rules, Testcontainers base) for every Orazaka JVM repository.</description>
+    <name>sovkora-build</name>
+    <description>Parent POM (Spring Boot / Spring AI BOMs, plugin management, Sovkora BOM) and the shared governance test kit (ArchUnit rules, Testcontainers base) for every Sovkora JVM repository.</description>
 
-    <url>https://github.com/krizaka/orazaka-build</url>
+    <url>https://github.com/krizaka/sovkora-build</url>
 
     <scm>
-        <url>https://github.com/krizaka/orazaka-build</url>
-        <connection>scm:git:https://github.com/krizaka/orazaka-build.git</connection>
-        <developerConnection>scm:git:git@github.com:krizaka/orazaka-build.git</developerConnection>
+        <url>https://github.com/krizaka/sovkora-build</url>
+        <connection>scm:git:https://github.com/krizaka/sovkora-build.git</connection>
+        <developerConnection>scm:git:git@github.com:krizaka/sovkora-build.git</developerConnection>
     </scm>
 
     <properties>
-        <!-- GitHub Packages repository the modules below are published to (orazaka-parent). -->
-        <orazaka.repository>orazaka-build</orazaka.repository>
+        <!-- GitHub Packages repository the modules below are published to (sovkora-parent). -->
+        <sovkora.repository>sovkora-build</sovkora.repository>
     </properties>
 
     <modules>
-        <module>orazaka-parent</module>
-        <module>orazaka-rewrite-style</module>
-        <module>orazaka-test-support</module>
+        <module>sovkora-parent</module>
+        <module>sovkora-rewrite-style</module>
+        <module>sovkora-test-support</module>
     </modules>
 </project>
