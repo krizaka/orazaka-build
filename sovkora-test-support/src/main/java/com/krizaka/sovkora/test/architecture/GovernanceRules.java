@@ -942,11 +942,13 @@ public final class GovernanceRules {
   }
 
   /**
-   * Whether a source belongs to krizaka-platform-kit — the one author the KIT rules point every
-   * other source to, and therefore the one place their implementations are allowed.
+   * Whether a source belongs to the service kit (krizaka-service-kit, formerly
+   * krizaka-platform-kit) — the one author the KIT rules point every other source to, and therefore
+   * the one place their implementations are allowed.
    */
-  private static boolean isTheKit(Path file) {
-    return file.toString().contains("krizaka-platform-kit");
+  static boolean isTheKit(Path file) {
+    String path = file.toString();
+    return path.contains("krizaka-service-kit") || path.contains("krizaka-platform-kit");
   }
 
   /** The service a source file belongs to, for a message an operator can act on. */
