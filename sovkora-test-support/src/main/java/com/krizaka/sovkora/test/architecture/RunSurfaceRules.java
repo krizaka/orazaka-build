@@ -114,6 +114,9 @@ public final class RunSurfaceRules {
 
   private static final String RULE = "DOOR-001";
 
+  /** The root package of every Sovkora class the rule judges. */
+  private static final String SOVKORA_PACKAGE = "com.krizaka.sovkora";
+
   /** This rule family's own package: its sources describe dispatch, they do not perform it. */
   private static final String RULES_PACKAGE = "com.krizaka.sovkora.test.architecture.";
 
@@ -192,7 +195,7 @@ public final class RunSurfaceRules {
     assertNoInboundEntryDispatchesAJob(
         new ClassFileImporter()
             .withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS)
-            .importPackages("com.krizaka.sovkora"));
+            .importPackages(SOVKORA_PACKAGE));
   }
 
   /**
@@ -260,7 +263,7 @@ public final class RunSurfaceRules {
    * Whether Spring exposes this class as an inbound HTTP entry — by annotation, never by package.
    */
   private static boolean isInboundHttpEntry(JavaClass type) {
-    if (!type.getPackageName().startsWith("com.krizaka.sovkora")) {
+    if (!type.getPackageName().startsWith(SOVKORA_PACKAGE)) {
       return false;
     }
     boolean stereotyped =
@@ -364,7 +367,7 @@ public final class RunSurfaceRules {
         .forEach(
             call -> {
               JavaClass owner = call.getTargetOwner();
-              if (!owner.getPackageName().startsWith("com.krizaka.sovkora")) {
+              if (!owner.getPackageName().startsWith(SOVKORA_PACKAGE)) {
                 return;
               }
               String name = call.getTarget().getName();
