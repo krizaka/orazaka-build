@@ -1131,10 +1131,10 @@ public final class GovernanceRules {
    * is checked.
    *
    * <p>The three per-question queries ({@code stepStates}, {@code stepCauses}, {@code
-   * stepFailureMessage}) became one {@code stepSnapshot} in sovkora-studio-service#73, and the studio's
-   * {@code main} carries it. The list stays a list of generations so the next such move can land
-   * the same way: the new generation added beside the old for the one pull request that moves the
-   * studio, never a mix of them and never neither, then the old one removed.
+   * stepFailureMessage}) became one {@code stepSnapshot} in sovkora-studio-service#73, and the
+   * studio's {@code main} carries it. The list stays a list of generations so the next such move
+   * can land the same way: the new generation added beside the old for the one pull request that
+   * moves the studio, never a mix of them and never neither, then the old one removed.
    */
   static final List<Set<String>> SAGA_STEP_READER_GENERATIONS = List.of(Set.of("stepSnapshot"));
 
