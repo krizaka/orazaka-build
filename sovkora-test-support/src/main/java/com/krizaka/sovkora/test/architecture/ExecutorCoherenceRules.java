@@ -273,7 +273,7 @@ public final class ExecutorCoherenceRules {
 
   private static List<Path> javaSources(Path root) {
     List<Path> sources = new ArrayList<>();
-    for (String module : List.of("orazaka-apps", "orazaka-libs")) {
+    for (String module : List.of("orazaka-apps", "sovkora-libs", "orazaka-libs")) {
       Path dir = root.resolve(module);
       if (!Files.isDirectory(dir)) {
         continue;
