@@ -324,7 +324,7 @@ class SeedBootstrapIT {
   void eachContextHasItsDatabase() {
     List<String> databases =
         strings(
-            "SELECT datname FROM pg_database WHERE datname LIKE 'sovkora%' OR datname LIKE 'krizaka%'"
+            "SELECT datname FROM pg_database WHERE datname LIKE 'orazaka%' OR datname LIKE 'krizaka%'"
                 + " ORDER BY 1",
             DATABASE);
 
