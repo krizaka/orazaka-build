@@ -847,7 +847,7 @@ public final class GovernanceRules {
     for (Path file : sources) {
       // The rules name the table in order to forbid it; that is not authoring a dedup.
       if (!file.toString().endsWith(".java")
-          || file.toString().contains("sovkora-test-support")
+          || inWorkspace(repositoryRoot, file).contains("sovkora-test-support")
           || isTheKit(file)) {
         continue;
       }
@@ -980,6 +980,20 @@ public final class GovernanceRules {
    *
    * @param repositoryRoot the repository root
    */
+  /**
+   * A source's path inside the workspace, with a leading separator: what a rule matches a module
+   * folder against. Never the absolute path: the checkout's own folder is named after the
+   * repository (a CI runner checks {@code sovkora-studio-service} out under {@code
+   * /work/sovkora-studio-service/}), so every file of the workspace matched the module.
+   */
+  static String inWorkspace(Path repositoryRoot, Path file) {
+    Path root = repositoryRoot.toAbsolutePath().normalize();
+    Path absolute = file.toAbsolutePath().normalize();
+    String relative =
+        absolute.startsWith(root) ? root.relativize(absolute).toString() : absolute.toString();
+    return "/" + relative.replace('\\', '/');
+  }
+
   public static void assertOneSettlementAuthor(Path repositoryRoot) {
     Workspace.require(repositoryRoot, "SAGA-001");
     List<String> offenders = new ArrayList<>();
@@ -991,7 +1005,8 @@ public final class GovernanceRules {
             "SAGA-001",
             "sovkora-studio-service production sources",
             PackPurityRules.productionSources(repositoryRoot).stream()
-                .filter(file -> file.toString().contains("/sovkora-studio-service/"))
+                .filter(
+                    file -> inWorkspace(repositoryRoot, file).contains("/sovkora-studio-service/"))
                 .toList());
     for (Path file : studioSources) {
       String name = file.getFileName().toString();
